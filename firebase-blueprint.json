@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "UserProfile": {
+      "collection": "users",
+      "path": "users/{userId}",
+      "fields": {
+        "email": { "type": "string", "required": true },
+        "displayName": { "type": "string", "required": false },
+        "photoURL": { "type": "string", "required": false },
+        "createdAt": { "type": "timestamp", "required": false },
+        "lastLogin": { "type": "timestamp", "required": false },
+        "notificationPrefs": { "type": "object", "required": false }
+      }
+    },
+    "Task": {
+      "collection": "tasks",
+      "path": "users/{userId}/tasks/{taskId}",
+      "fields": {
+        "task_id": { "type": "string", "required": true },
+        "type": { "type": "string", "required": false },
+        "course": { "type": "string", "required": false },
+        "title": { "type": "string", "required": true },
+        "due_at": { "type": "string", "required": false },
+        "status": { "type": "string", "required": false },
+        "canvas_url": { "type": "string", "required": false },
+        "points_earned": { "type": "string", "required": false },
+        "points_possible": { "type": "string", "required": false },
+        "grade_text": { "type": "string", "required": false },
+        "feedback": { "type": "string", "required": false },
+        "progress_notes": { "type": "string", "required": false },
+        "next_action": { "type": "string", "required": false },
+        "needs_review": { "type": "boolean", "required": false },
+        "updated_at": { "type": "string", "required": false }
+      }
+    },
+    "Course": {
+      "collection": "courses",
+      "path": "users/{userId}/courses/{courseId}",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "course_name": { "type": "string", "required": false },
+        "course_code": { "type": "string", "required": true },
+        "instructor": { "type": "string", "required": false },
+        "meeting_times": { "type": "string", "required": false },
+        "start_date": { "type": "string", "required": false },
+        "end_date": { "type": "string", "required": false },
+        "online_links": { "type": "string", "required": false },
+        "instructor_email": { "type": "string", "required": false },
+        "outline_url": { "type": "string", "required": false },
+        "other_links": { "type": "string", "required": false }
+      }
+    },
+    "GroupProject": {
+      "collection": "groups",
+      "path": "groups/{groupId}",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "name": { "type": "string", "required": true },
+        "course_code": { "type": "string", "required": true },
+        "description": { "type": "string", "required": false },
+        "created_by": { "type": "string", "required": true },
+        "created_at": { "type": "string", "required": true },
+        "updated_at": { "type": "string", "required": true },
+        "invite_code": { "type": "string", "required": true },
+        "members": { "type": "array", "required": true },
+        "member_details": { "type": "object", "required": true },
+        "target_date": { "type": "string", "required": false }
+      }
+    },
+    "GroupTask": {
+      "collection": "tasks",
+      "path": "groups/{groupId}/tasks/{taskId}",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "group_id": { "type": "string", "required": true },
+        "title": { "type": "string", "required": true },
+        "description": { "type": "string", "required": false },
+        "status": { "type": "string", "required": true },
+        "priority": { "type": "string", "required": true },
+        "due_at": { "type": "string", "required": false },
+        "assigned_to": { "type": "string", "required": false },
+        "assignee_name": { "type": "string", "required": false },
+        "estimated_hours": { "type": "number", "required": false },
+        "logged_hours": { "type": "number", "required": false },
+        "subtasks": { "type": "array", "required": false },
+        "created_by": { "type": "string", "required": true },
+        "created_by_name": { "type": "string", "required": false },
+        "created_at": { "type": "string", "required": true },
+        "updated_at": { "type": "string", "required": true }
+      }
+    }
+  }
+}

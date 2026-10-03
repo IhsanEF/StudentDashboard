@@ -1,0 +1,22 @@
+name: Firestore rules
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Verify deployment database and project
+        run: node scripts/check-firestore-config.mjs
+      - name: Compile rules and verify group authorization
+        run: npx firebase-tools@15.30.2 emulators:exec --only firestore --project demo-batch21 'npx tsx src/services/Batch21.test.ts'

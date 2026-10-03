@@ -1,0 +1,275 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url == '' || url.matches('https?://.*') || url.matches('mailto:.*'));
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['email', 'displayName', 'photoURL', 'lastLogin', 'createdAt', 'notificationPrefs', 'uiPrefs'])
+        && (request.resource.data.email == '' || request.resource.data.email == request.auth.token.email)
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 200
+        && (!('photoURL' in request.resource.data) || (request.resource.data.photoURL is string && request.resource.data.photoURL.size() <= 2000));
+      allow delete: if isOwner(userId);
+
+      match /tasks/{taskId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && taskId.size() <= 128
+          && request.resource.data.keys().hasOnly([
+            'task_id', 'id', 'type', 'course', 'title', 'due_at', 'status', 'check_again_at',
+            'canvas_url', 'summary', 'source_message_id', 'last_email_at', 'needs_review',
+            'points_earned', 'points_possible', 'grade_text', 'feedback', 'progress_notes',
+            'next_action', 'last_interaction_at', 'created_at', 'updated_at', 'category_id',
+            'category_name', 'source', 'is_syllabus_only', 'is_past', 'subtasks',
+            'estimated_hours', 'logged_minutes', 'focus_sessions', 'canvas_date_diff', 'demo_seed', 'weight'
+          ])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 300
+          && (!('summary' in request.resource.data) || (request.resource.data.summary is string && request.resource.data.summary.size() <= 5000))
+          && (!('feedback' in request.resource.data) || (request.resource.data.feedback is string && request.resource.data.feedback.size() <= 5000))
+          && (!('progress_notes' in request.resource.data) || (request.resource.data.progress_notes is string && request.resource.data.progress_notes.size() <= 5000))
+          && (!('next_action' in request.resource.data) || (request.resource.data.next_action is string && request.resource.data.next_action.size() <= 2000))
+          && (!('grade_text' in request.resource.data) || (request.resource.data.grade_text is string && request.resource.data.grade_text.size() <= 500))
+          && (!('canvas_url' in request.resource.data) || isValidUrl(request.resource.data.canvas_url))
+          && (!('subtasks' in request.resource.data) || (request.resource.data.subtasks is list && request.resource.data.subtasks.size() <= 50))
+          && (!('focus_sessions' in request.resource.data) || (request.resource.data.focus_sessions is list && request.resource.data.focus_sessions.size() <= 500))
+          && (!('estimated_hours' in request.resource.data) || request.resource.data.estimated_hours is number)
+          && (!('weight' in request.resource.data) || (request.resource.data.weight is number && request.resource.data.weight >= 0 && request.resource.data.weight <= 100))
+          && (!('logged_minutes' in request.resource.data) || (request.resource.data.logged_minutes is number && request.resource.data.logged_minutes >= 0 && request.resource.data.logged_minutes <= 100000));
+        allow delete: if isOwner(userId);
+      }
+
+      match /courses/{courseId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && courseId.size() <= 128
+          && request.resource.data.keys().hasOnly([
+            'id', 'course_name', 'course_code', 'instructor', 'instructor_email',
+            'meeting_times', 'start_date', 'end_date', 'online_links', 'outline_url',
+            'other_links', 'late_policy', 'office_hours', 'grade_categories', 'credits'
+          ])
+          && request.resource.data.course_code is string
+          && request.resource.data.course_code.size() <= 100
+          && (!('course_name' in request.resource.data) || (request.resource.data.course_name is string && request.resource.data.course_name.size() <= 200))
+          && (!('instructor' in request.resource.data) || (request.resource.data.instructor is string && request.resource.data.instructor.size() <= 200))
+          && (!('instructor_email' in request.resource.data) || (request.resource.data.instructor_email is string && request.resource.data.instructor_email.size() <= 200))
+          && (!('meeting_times' in request.resource.data) || (request.resource.data.meeting_times is string && request.resource.data.meeting_times.size() <= 2000))
+          && (!('late_policy' in request.resource.data) || (request.resource.data.late_policy is string && request.resource.data.late_policy.size() <= 5000))
+          && (!('office_hours' in request.resource.data) || (request.resource.data.office_hours is string && request.resource.data.office_hours.size() <= 2000))
+          && (!('online_links' in request.resource.data) || isValidUrl(request.resource.data.online_links))
+          && (!('outline_url' in request.resource.data) || isValidUrl(request.resource.data.outline_url))
+          && (!('other_links' in request.resource.data) || isValidUrl(request.resource.data.other_links))
+          && (!('credits' in request.resource.data) || (request.resource.data.credits is number && request.resource.data.credits >= 0 && request.resource.data.credits <= 30))
+          && (!('grade_categories' in request.resource.data) || (request.resource.data.grade_categories is list && request.resource.data.grade_categories.size() <= 30));
+        allow delete: if isOwner(userId);
+      }
+
+      match /classes/{classId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && classId.size() <= 128
+          && request.resource.data.keys().hasOnly(['id', 'course_code', 'course_name', 'component', 'section', 'day_of_week', 'start_time', 'end_time', 'location', 'instructor', 'term', 'color', 'type', 'day'])
+          && request.resource.data.course_code is string
+          && request.resource.data.course_code.size() <= 100
+          && (!('start_time' in request.resource.data) || (request.resource.data.start_time is string && request.resource.data.start_time.size() <= 100))
+          && (!('end_time' in request.resource.data) || (request.resource.data.end_time is string && request.resource.data.end_time.size() <= 100))
+          && (!('location' in request.resource.data) || (request.resource.data.location is string && request.resource.data.location.size() <= 500))
+          && (!('course_name' in request.resource.data) || (request.resource.data.course_name is string && request.resource.data.course_name.size() <= 200))
+          && (!('color' in request.resource.data) || (request.resource.data.color is string && request.resource.data.color.size() <= 100))
+          && (!('type' in request.resource.data) || request.resource.data.type in ['Lecture', 'Lab', 'Tutorial', 'Seminar', 'Studio', 'Other'])
+          && (!('day' in request.resource.data) || request.resource.data.day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+          && (!('instructor' in request.resource.data) || (request.resource.data.instructor is string && request.resource.data.instructor.size() <= 200));
+        allow delete: if isOwner(userId);
+      }
+
+      match /exams/{examId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && examId.size() <= 128
+          && request.resource.data.keys().hasOnly(['id', 'course_code', 'course_name', 'exam_type', 'date', 'start_time', 'end_time', 'location', 'format', 'seat', 'weight', 'notes', 'color', 'title', 'weight_percent'])
+          && request.resource.data.course_code is string
+          && request.resource.data.course_code.size() <= 100
+          && (!('start_time' in request.resource.data) || (request.resource.data.start_time is string && request.resource.data.start_time.size() <= 100))
+          && (!('end_time' in request.resource.data) || (request.resource.data.end_time is string && request.resource.data.end_time.size() <= 100))
+          && (!('location' in request.resource.data) || (request.resource.data.location is string && request.resource.data.location.size() <= 500))
+          && (!('course_name' in request.resource.data) || (request.resource.data.course_name is string && request.resource.data.course_name.size() <= 200))
+          && (!('color' in request.resource.data) || (request.resource.data.color is string && request.resource.data.color.size() <= 100))
+          && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 300))
+          && (!('date' in request.resource.data) || (request.resource.data.date is string && request.resource.data.date.size() <= 100))
+          && (!('notes' in request.resource.data) || (request.resource.data.notes is string && request.resource.data.notes.size() <= 5000))
+          && (!('weight_percent' in request.resource.data) || (request.resource.data.weight_percent is number && request.resource.data.weight_percent >= 0 && request.resource.data.weight_percent <= 100));
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    match /groups/{groupId} {
+      // Members can read the group document; authenticated users can also read to look up by invite code
+      allow read: if isAuthenticated() && (
+        (request.auth.uid in resource.data.members) ||
+        (resource.data.invite_code is string && resource.data.invite_code != '')
+      );
+      
+      // Group creation rule:
+      // - Creator must be caller
+      // - members array must be strictly [request.auth.uid]
+      // - member_details map must contain only creator's uid key
+      // - member_details[request.auth.uid].uid must be request.auth.uid
+      // - invite_code must match the app's six-character UBC code
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasOnly([
+          'id', 'name', 'course_code', 'description', 'created_by', 'created_at',
+          'updated_at', 'invite_code', 'members', 'member_details', 'target_date'
+        ])
+        && request.resource.data.created_by == request.auth.uid
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.member_details.keys().hasOnly([request.auth.uid])
+        && request.resource.data.member_details[request.auth.uid].uid == request.auth.uid
+        && request.resource.data.member_details[request.auth.uid].keys().hasOnly(['uid', 'displayName', 'role'])
+        && request.resource.data.member_details[request.auth.uid].displayName is string
+        && request.resource.data.member_details[request.auth.uid].role == 'owner'
+        && request.resource.data.members.size() <= 50
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 200
+        && request.resource.data.course_code is string
+        && request.resource.data.course_code.size() <= 50
+        && (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 2000))
+        && (!('target_date' in request.resource.data) || (request.resource.data.target_date is string && request.resource.data.target_date.size() <= 50))
+        && request.resource.data.invite_code is string
+        && request.resource.data.invite_code.matches('^UBC[0-9]{3}$');
+
+      // Group update rule:
+      // 1. Existing members can update metadata without taking over ownership, changing created_at, or arbitrarily evicting others
+      // 2. Member updates cannot grow members (size <= existing size, removal/leave only)
+      // 3. Non-members can only self-join by appending their uid and adding their own member details
+      function isCreatorLeaving() {
+        let remaining = resource.data.members.removeAll([request.auth.uid]);
+        return resource.data.created_by == request.auth.uid
+          && request.auth.uid in resource.data.members
+          && remaining.size() > 0
+          && request.resource.data.members == remaining
+          && request.resource.data.created_by == remaining[0]
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'member_details', 'created_by', 'updated_at'])
+          && request.resource.data.member_details.diff(resource.data.member_details).affectedKeys().hasOnly([request.auth.uid, remaining[0]])
+          && !(request.auth.uid in request.resource.data.member_details)
+          && request.resource.data.member_details[remaining[0]].diff(resource.data.member_details[remaining[0]]).affectedKeys().hasOnly(['role'])
+          && request.resource.data.member_details[remaining[0]].role == 'owner';
+      }
+
+      allow update: if isAuthenticated()
+        && request.resource.data.keys().hasOnly([
+          'id', 'name', 'course_code', 'description', 'created_by', 'created_at',
+          'updated_at', 'invite_code', 'members', 'member_details', 'target_date'
+        ])
+        && (request.resource.data.created_by == resource.data.created_by || isCreatorLeaving())
+        && request.resource.data.created_at == resource.data.created_at
+        && (request.resource.data.created_by in request.resource.data.members)
+        && (!('invite_code' in resource.data) || request.resource.data.invite_code == resource.data.invite_code || resource.data.created_by == request.auth.uid)
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 200
+        && request.resource.data.course_code is string
+        && request.resource.data.course_code.size() <= 50
+        && (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 5000))
+        && (!('target_date' in request.resource.data) || (request.resource.data.target_date is string && request.resource.data.target_date.size() <= 50))
+        && (!('invite_code' in request.resource.data) || (request.resource.data.invite_code is string && request.resource.data.invite_code.matches('^[A-Z0-9]{3,10}$')))
+        && request.resource.data.members is list
+        && request.resource.data.members.size() <= 50
+        && (
+          // Existing member update: cannot grow members (removal/leave or keep same size)
+          (
+            (request.auth.uid in resource.data.members)
+            && request.resource.data.members.size() <= resource.data.members.size()
+            && (
+              request.resource.data.members.hasAll(resource.data.members) ||
+              (request.resource.data.members.size() == resource.data.members.size() - 1 && !(request.auth.uid in request.resource.data.members))
+            )
+          ) ||
+          // Self-join: non-member may only add themselves and their own member_details
+          (
+            !(request.auth.uid in resource.data.members)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'member_details', 'updated_at'])
+            && request.resource.data.members.hasAll(resource.data.members)
+            && (request.auth.uid in request.resource.data.members)
+            && request.resource.data.members.size() == resource.data.members.size() + 1
+            && (!('member_details' in resource.data) || request.resource.data.member_details.keys().hasAll(resource.data.member_details.keys()))
+            && (!('member_details' in request.resource.data) || (
+              request.resource.data.member_details.diff(resource.data.member_details).affectedKeys().hasOnly([request.auth.uid])
+              && request.resource.data.member_details[request.auth.uid].uid == request.auth.uid
+              && request.resource.data.member_details[request.auth.uid].keys().hasOnly(['uid', 'displayName', 'role'])
+              && request.resource.data.member_details[request.auth.uid].displayName is string
+              && request.resource.data.member_details[request.auth.uid].role == 'member'
+            ))
+          )
+        );
+
+      // A former creator loses deletion rights when they leave the group.
+      allow delete: if isAuthenticated()
+        && resource.data.created_by == request.auth.uid
+        && request.auth.uid in resource.data.members;
+
+      match /tasks/{taskId} {
+        // Group tasks can be read, created, updated, and deleted only by authenticated members of the group
+        allow read: if isAuthenticated() && (
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members
+        );
+
+        allow create: if isAuthenticated()
+          && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members)
+          && taskId.size() <= 128
+          && request.resource.data.keys().hasOnly([
+            'id', 'group_id', 'title', 'description', 'status', 'priority', 'due_at',
+            'assigned_to', 'assignee_name', 'estimated_hours', 'logged_hours',
+            'subtasks', 'created_by', 'created_by_name', 'created_at', 'updated_at', 'last_modified_by'
+          ])
+          && request.resource.data.group_id == groupId
+          && request.resource.data.created_by == request.auth.uid
+          && (!('last_modified_by' in request.resource.data) || request.resource.data.last_modified_by == request.auth.uid)
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 300
+          && (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 5000))
+          && (!('status' in request.resource.data) || request.resource.data.status in ['Not Started', 'In Progress', 'In Review', 'Done'])
+          && (!('priority' in request.resource.data) || request.resource.data.priority in ['Low', 'Medium', 'High', 'Critical'])
+          && (!('subtasks' in request.resource.data) || (request.resource.data.subtasks is list && request.resource.data.subtasks.size() <= 50))
+          && (!('estimated_hours' in request.resource.data) || request.resource.data.estimated_hours is number)
+          && (!('logged_hours' in request.resource.data) || request.resource.data.logged_hours is number);
+
+        allow update: if isAuthenticated()
+          && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members)
+          && taskId.size() <= 128
+          && request.resource.data.keys().hasOnly([
+            'id', 'group_id', 'title', 'description', 'status', 'priority', 'due_at',
+            'assigned_to', 'assignee_name', 'estimated_hours', 'logged_hours',
+            'subtasks', 'created_by', 'created_by_name', 'created_at', 'updated_at', 'last_modified_by'
+          ])
+          && request.resource.data.group_id == groupId
+          && (!('created_by' in resource.data) || request.resource.data.created_by == resource.data.created_by)
+          && (!('created_by_name' in resource.data) || request.resource.data.created_by_name == resource.data.created_by_name)
+          && request.resource.data.last_modified_by == request.auth.uid
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 300
+          && (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 5000))
+          && (!('status' in request.resource.data) || request.resource.data.status in ['Not Started', 'In Progress', 'In Review', 'Done'])
+          && (!('priority' in request.resource.data) || request.resource.data.priority in ['Low', 'Medium', 'High', 'Critical'])
+          && (!('subtasks' in request.resource.data) || (request.resource.data.subtasks is list && request.resource.data.subtasks.size() <= 50))
+          && (!('estimated_hours' in request.resource.data) || request.resource.data.estimated_hours is number)
+          && (!('logged_hours' in request.resource.data) || request.resource.data.logged_hours is number);
+
+        allow delete: if isAuthenticated() && (
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members
+        );
+      }
+    }
+  }
+}
