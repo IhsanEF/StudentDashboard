@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { GraduationCap, AlertCircle, Loader2, Copy, Check, Info } from 'lucide-react';
-import { googleSignIn } from '../auth';
+import { googleSignIn, emailSignIn, resetPassword } from '../auth';
 import PrivacyModal from './PrivacyModal';
 
 export default function Login({ 
@@ -15,7 +15,11 @@ export default function Login({
   const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [isWebview, setIsWebview] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [showRedirectFallback, setShowRedirectFallback] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [notice, setNotice] = useState('');
+  const [pendingAction, setPendingAction] = useState<'google' | 'email' | 'reset' | null>(null);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
   useEffect(() => {
@@ -36,48 +40,90 @@ export default function Login({
     }
   };
 
-  // Detect standalone home-screen PWA mode (iOS WebKit standalone / display-mode: standalone)
-  const isStandalone = typeof window !== 'undefined' && (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true
-  );
+  const showAuthError = (err: any) => {
+    console.error('Login error details:', err);
+    if (err.code === 'auth/unauthorized-domain') {
+      setError('Google sign-in is not configured for this address yet. Please use email sign-in while we resolve it.');
+    } else if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/password-login-disabled') {
+      setError('This sign-in method is currently unavailable. Please try the other sign-in option.');
+    } else if (err.code === 'auth/popup-blocked') {
+      setError('Allow pop-ups for this site to sign in with Google, or sign in with email below.');
+    } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+      setError('The sign-in window closed before finishing. Please try again, or sign in with email.');
+    } else if (['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found', 'auth/invalid-login-credentials'].includes(err.code)) {
+      setError('The email or password is incorrect. Try again or reset your password.');
+    } else if (err.code === 'auth/invalid-email') {
+      setError('Enter a valid email address.');
+    } else if (err.code === 'auth/too-many-requests') {
+      setError('Too many sign-in attempts. Please wait a few minutes and try again.');
+    } else if (err.code === 'auth/user-disabled') {
+      setError('This account is disabled. Please contact the dashboard owner.');
+    } else if (err.code === 'auth/network-request-failed') {
+      setError('Unable to connect. Check your internet connection and try again.');
+    } else if (err.message?.includes('disallowed_useragent')) {
+      setError('Open this page in Safari or Chrome to sign in with Google, or use email sign-in below.');
+    } else {
+      setError("Sign-in didn't finish. Please try again or use the other sign-in option.");
+    }
+  };
 
-  const handleLogin = async (useRedirect = isStandalone) => {
+  const handleLogin = async () => {
     setLoading(true);
+    setPendingAction('google');
     setError('');
+    setNotice('');
     try {
-      const user = await googleSignIn(useRedirect, keepSignedIn);
+      const user = await googleSignIn(false, keepSignedIn);
       if (user) {
         onLogin(user);
       }
     } catch (err: any) {
-      console.error('Login error details:', err);
-      
-      const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'current domain';
+      showAuthError(err);
+    } finally {
+      setLoading(false);
+      setPendingAction(null);
+    }
+  };
 
-      // If popup fails, reveal the redirect fallback
-      if (!useRedirect) {
-        setShowRedirectFallback(true);
-      }
+  const handleEmailLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setPendingAction('email');
+    setError('');
+    setNotice('');
+    try {
+      onLogin(await emailSignIn(email, password, keepSignedIn));
+    } catch (err: any) {
+      showAuthError(err);
+    } finally {
+      setPassword('');
+      setLoading(false);
+      setPendingAction(null);
+    }
+  };
 
-      if (err.code === 'auth/unauthorized-domain') {
-        console.error(`Operator note: This domain (${currentHost}) is not authorized in Firebase Auth. Add it to Authorized domains in Firebase Console.`);
-        setError("Sign-in isn't set up for this address yet. This is a problem on our side, not yours — try again later, or use Enter as Demo Student to look around in the meantime.");
-      } else if (err.code === 'auth/operation-not-allowed') {
-        console.error('Operator note: Google provider is disabled in Firebase Console Authentication.', err);
-        setError("Sign-in isn't set up for this address yet. This is a problem on our side, not yours — try again later, or use Enter as Demo Student to look around in the meantime.");
-      } else if (err.code === 'auth/popup-blocked') {
-        setError('Sign-in pop-up was blocked. Use the link below to sign in on this page.');
-      } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-        setError('Sign-in pop-up was closed before completing. Please try again or sign in on this page.');
-      } else if (err.message && err.message.includes('disallowed_useragent')) {
-        setError('Google blocks sign-in inside in-app browsers. Please tap the menu (...) and choose "Open in Chrome/Safari".');
+  const handlePasswordReset = async () => {
+    setError('');
+    setNotice('');
+    if (!email.trim()) {
+      setError('Enter your email address above to reset your password.');
+      return;
+    }
+    setLoading(true);
+    setPendingAction('reset');
+    try {
+      await resetPassword(email);
+      setNotice('If an account exists for this email, you will receive a password reset link. Check your inbox and spam folder.');
+    } catch (err: any) {
+      // Keep account existence private on projects without enumeration protection.
+      if (err.code === 'auth/user-not-found') {
+        setNotice('If an account exists for this email, you will receive a password reset link. Check your inbox and spam folder.');
       } else {
-        console.error('Login error details:', err);
-        setError("Sign-in didn't finish. Please try again.");
+        showAuthError(err);
       }
     } finally {
       setLoading(false);
+      setPendingAction(null);
     }
   };
 
@@ -125,6 +171,7 @@ export default function Login({
             <p className="text-xs font-medium leading-relaxed">{error}</p>
           </div>
         )}
+        {notice && <p role="status" className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm">{notice}</p>}
 
         <div className="space-y-3">
           <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -139,27 +186,46 @@ export default function Login({
           </label>
           <button
             type="button"
-            onClick={() => handleLogin(false)}
+            onClick={handleLogin}
             disabled={isBusy}
             className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3.5 px-4 font-semibold flex items-center justify-center gap-3 transition-colors disabled:opacity-70 cursor-pointer shadow-md text-sm"
           >
-            {isBusy ? (
+            {pendingAction === 'google' ? (
               <Loader2 className="animate-spin" size={20} />
             ) : (
               <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 bg-white rounded-full p-0.5" />
             )}
-            {isBusy ? 'Checking session...' : 'Sign in with Google'}
+            {pendingAction === 'google' ? 'Signing in...' : 'Sign in with Google'}
           </button>
 
-          {showRedirectFallback && (
-            <button
-              type="button"
-              onClick={() => handleLogin(true)}
-              disabled={isBusy}
-              className="w-full text-slate-600 hover:text-slate-900 text-xs font-medium py-1 transition-colors cursor-pointer text-center underline"
-            >
-              Pop-up blocked? Sign in on this page instead
-            </button>
+          <button type="button" onClick={() => { setShowEmailForm(!showEmailForm); setError(''); setNotice(''); setPassword(''); }}
+            disabled={isBusy} aria-expanded={showEmailForm} aria-controls="email-sign-in"
+            className="w-full border border-slate-300 text-slate-800 hover:bg-slate-50 rounded-xl py-3 px-4 font-semibold text-sm disabled:opacity-60">
+            {showEmailForm ? 'Hide email sign-in' : 'Sign in with email'}
+          </button>
+          {showEmailForm && (
+            <form id="email-sign-in" onSubmit={handleEmailLogin} className="space-y-3 pt-2">
+              <div>
+                <label htmlFor="login-email" className="block text-sm font-medium text-slate-700 mb-1">Email address</label>
+                <input id="login-email" type="email" autoComplete="username" required value={email}
+                  onChange={e => setEmail(e.target.value)} disabled={isBusy}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm" />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <input id="login-password" type="password" autoComplete="current-password" required value={password}
+                  onChange={e => setPassword(e.target.value)} disabled={isBusy}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm" />
+              </div>
+              <button type="submit" disabled={isBusy} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold text-sm disabled:opacity-60">
+                {pendingAction === 'email' ? 'Signing in...' : 'Sign in'}
+              </button>
+              <button type="button" disabled={isBusy} onClick={handlePasswordReset}
+                className="text-sm text-blue-700 underline disabled:opacity-60">
+                {pendingAction === 'reset' ? 'Sending reset link...' : 'Forgot password?'}
+              </button>
+              <p className="text-xs text-slate-500">Use the email and password for your existing dashboard account.</p>
+            </form>
           )}
         </div>
 
@@ -188,7 +254,7 @@ export default function Login({
         </div>
 
         <p className="text-center text-xs text-slate-500 font-medium">
-          Open to all students &bull; Sign in with any Google account
+          Open to all students &bull; Google or email sign-in
         </p>
       </div>
 

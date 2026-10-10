@@ -521,6 +521,7 @@ const authBundle = await build({ entryPoints: ['src/auth.ts'], bundle: true, wri
            export const setPersistence = async () => {}; export const browserSessionPersistence = {}; export const browserLocalPersistence = {};
            export const signOut = async () => { globalThis.state.signOuts++; globalThis.state.callback(); };
            export const signInWithPopup = async () => null; export const signInWithRedirect = async () => {};
+           export const signInWithEmailAndPassword = async () => null; export const sendPasswordResetEmail = async () => {};
            export const getRedirectResult = async () => null; export const onAuthStateChanged = () => () => {};`
         : `export const initializeFirestore = () => ({}); export const getFirestore = () => ({});
            export const persistentLocalCache = () => ({}); export const persistentMultipleTabManager = () => ({});

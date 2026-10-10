@@ -5,6 +5,8 @@ import {
   browserSessionPersistence,
   browserLocalPersistence,
   signInWithPopup, 
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInWithRedirect, 
   getRedirectResult, 
   GoogleAuthProvider, 
@@ -24,15 +26,10 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
-// Serve auth handler from app's own origin per Firebase redirect best practices (V4-121)
-const effectiveAuthDomain = typeof window !== 'undefined' && window.location.hostname && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')
-  ? window.location.host
-  : firebaseConfig.authDomain;
-
-export const app = initializeApp({
-  ...firebaseConfig,
-  authDomain: effectiveAuthDomain
-});
+// The Firebase-hosted handler already has an authorized Google OAuth callback.
+// Replacing it with every deployment's hostname also requires configuring that
+// callback in Google Cloud; a reverse proxy alone does not authorize it.
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 export type OfflineCacheStatus = 'checking' | 'persistent' | 'memory';
@@ -188,6 +185,14 @@ export const googleSignIn = async (useRedirect = false, keepSignedIn = false): P
     throw error;
   }
 };
+
+export const emailSignIn = async (email: string, password: string, keepSignedIn = false): Promise<User> => {
+  await setPersistence(auth, keepSignedIn ? browserLocalPersistence : browserSessionPersistence);
+  const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+  return result.user;
+};
+
+export const resetPassword = (email: string): Promise<void> => sendPasswordResetEmail(auth, email.trim());
 
 /**
  * Robust sign-out:

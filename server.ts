@@ -78,8 +78,8 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
   try {
     const decodedToken = await getAuth().verifyIdToken(token, true);
     const signInProvider = decodedToken.firebase?.sign_in_provider;
-    if (signInProvider !== 'google.com') {
-      return res.status(403).json({ error: 'Forbidden: Only verified Google authentication is accepted.' });
+    if (signInProvider !== 'google.com' && signInProvider !== 'password') {
+      return res.status(403).json({ error: 'Forbidden: Sign in with Google or email and password.' });
     }
     if (decodedToken.email_verified !== true) {
       return res.status(403).json({ error: 'Forbidden: Email address is not verified.' });
@@ -107,8 +107,8 @@ const requireFreshAuth = async (req: express.Request, res: express.Response, nex
   try {
     const decodedToken = await getAuth().verifyIdToken(token, true);
     const signInProvider = decodedToken.firebase?.sign_in_provider;
-    if (signInProvider !== 'google.com') {
-      return res.status(403).json({ error: 'Forbidden: Only verified Google authentication is accepted.' });
+    if (signInProvider !== 'google.com' && signInProvider !== 'password') {
+      return res.status(403).json({ error: 'Forbidden: Sign in with Google or email and password.' });
     }
     if (decodedToken.email_verified !== true) {
       return res.status(403).json({ error: 'Forbidden: Email address is not verified.' });
@@ -742,7 +742,8 @@ async function startServer() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: process.env.NODE_ENV === 'production' ? ["'self'"] : ["'self'", "'unsafe-inline'"],
+        // Firebase popup authentication loads Google's gapi helper dynamically.
+        scriptSrc: ["'self'", 'https://apis.google.com', 'https://www.gstatic.com', ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-inline'"])],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
         imgSrc: ["'self'", 'data:', 'https://lh3.googleusercontent.com', 'https://www.google.com'],

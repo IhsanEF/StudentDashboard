@@ -69,7 +69,7 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          navigateFallbackDenylist: [/^\/api\//, /\.ics$/],
+          navigateFallbackDenylist: [/^\/api\//, /^\/__\/auth(?:\/|$)/, /\.ics$/],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         },
