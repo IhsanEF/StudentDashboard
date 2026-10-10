@@ -69,18 +69,19 @@ async function harness(name: string, demo = false) {
         'export const batchImportTasksAndCourses=globalThis.batch; export const saveFirestoreCourse=()=>{};' }));
     } }] });
   const module = { exports: {} as any };
+  let responseStatus = 200;
   const fetchMock = async (url: string, options: any) => {
     if (url === '/api/health') return { json: async () => ({ aiAvailable: true }) };
     requests.push({ url, headers: options.headers, body: JSON.parse(options.body) });
     if (result instanceof Error) throw result;
-    return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => structuredClone(result) };
+    return { ok: responseStatus < 400, status: responseStatus, headers: { get: () => 'application/json' }, json: async () => structuredClone(result) };
   };
   new Function('module', 'exports', 'require', 'globalThis', 'fetch', 'window', 'document', 'navigator', 'localStorage', 'Image', 'FileReader', 'setTimeout', 'clearTimeout', bundle.outputFiles[0].text)(
     module, module.exports, createRequire(import.meta.url), environment, fetchMock, environment.window, environment.document,
     environment.navigator, environment.localStorage, environment.Image, environment.FileReader, () => 0, () => {});
   return { requests, imports, courseUpdates, updates, deletes, saves, environment,
     render: (props: any = {}) => { index = 0; return name === 'SyllabusImportModal' ? module.exports.SyllabusImportBody(props) : module.exports.default(props); },
-    response: (data: any) => { result = data; }, confirm: () => { confirmed = true; },
+    response: (data: any, status = 200) => { result = data; responseStatus = status; }, confirm: () => { confirmed = true; },
     clipboardFail: () => { clipboard.writeText = async () => { throw new Error('Denied'); }; }, clipboardMissing: () => { environment.navigator.clipboard = undefined; },
     clipboardCounts: () => ({ copied, selected }), create: (value: any) => { createResult = value; }, counts: () => createCalls,
     pendingSave: (value: any) => { saveResult = value; }, stateValues: () => values
@@ -220,6 +221,14 @@ tree = retiredCalendar.render({ ...open, defaultTab: 'calendar' });
 assert.equal(input(tree, 'calendar-feed-url-input'), undefined);
 assert.ok(find(tree, n => n.type === 'input' && n.props.type === 'file'));
 assert.equal(retiredCalendar.requests.length, 0, 'Legacy calendar entry only offers document upload');
+
+const unavailable = await harness('SmartImportModal');
+unavailable.response({ error: 'Internal billing detail' }, 503);
+tree = unavailable.render(open);
+change(input(tree, 'email-notification-textarea'), 'Grade 5 Mathematics course outline');
+await button(unavailable.render(open), 'Extract Coursework').props.onClick();
+assert.match(JSON.stringify(unavailable.render(open)), /currently unavailable.*add courses and tasks manually/);
+assert.doesNotMatch(JSON.stringify(unavailable.render(open)), /Internal billing detail/);
 
 const image = await harness('SmartImportModal');
 image.response({ tasks: [imported], courses: [] });

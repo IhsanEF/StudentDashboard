@@ -3,8 +3,13 @@ import ical from 'node-ical';
 import {
   validateDueDate, parseNaturalLanguageDate, parseNaturalLanguageTaskFallback,
   isPrivateOrReservedIp, validateAndResolveUrl, parseIcsEvents,
-  RecurringCalendarEventError, buildTaskVevent, normalizeTimeTo24h, normalizeImportedExamTimes, normalizeCourseLabel, courseStorageId,
+  RecurringCalendarEventError, buildTaskVevent, normalizeTimeTo24h, normalizeImportedExamTimes, normalizeCourseLabel, courseStorageId, isAiBillingUnavailable,
 } from './lib';
+
+assert.equal(isAiBillingUnavailable({ status: 402, message: 'RESOURCE_EXHAUSTED' }), true);
+assert.equal(isAiBillingUnavailable({ message: 'Your prepayment credits are depleted.' }), true);
+assert.equal(isAiBillingUnavailable({ status: 429, message: 'RESOURCE_EXHAUSTED' }), false);
+assert.equal(isAiBillingUnavailable(null), false);
 
 for (const label of ['Grade 5 Mathematics', 'Welding Level 1', '数学 五年级', 'Études sociales']) {
   assert.equal(normalizeCourseLabel(label), label);

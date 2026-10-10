@@ -168,6 +168,11 @@ export function feedDescriptionToText(raw: string, maxLength = 5000): string {
   return boundary > 0 ? text.slice(0, boundary) : '';
 }
 
+export function isAiBillingUnavailable(error: unknown): boolean {
+  const err = error as { status?: number; message?: string } | null;
+  return err?.status === 402 || /prepayment credits.*depleted|payment required/i.test(err?.message || '');
+}
+
 export function normalizeCourseLabel(raw?: string | null): string {
   if (typeof raw !== 'string') return 'General';
   return raw.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100) || 'General';

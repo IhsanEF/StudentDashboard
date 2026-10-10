@@ -19,6 +19,7 @@ const SyllabusImportBody = React.lazy(() => import('./SyllabusImportModal').then
 
 export type { ImportTabType };
 
+const IMPORT_UNAVAILABLE_MESSAGE = 'Course-outline extraction is currently unavailable. You can still add courses and tasks manually.';
 const DEMO_IMPORT_MESSAGE = "Sign in with Google or email to import. Demo mode can't extract from course text, files, or screenshots.";
 
 // Validate and format a due date string into Vancouver date (YYYY-MM-DD)
@@ -903,7 +904,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'file' 
       throw new Error(`${getActionName(activeMode)} needs a signed-in account — try Quick Add instead`);
     }
     if (res.status === 503) {
-      throw new Error('The planner is unavailable right now, try again shortly.');
+      throw new Error(IMPORT_UNAVAILABLE_MESSAGE);
     }
     if (res.status === 413) {
       throw new Error('The file or image is too large for the server to process. Please reduce image resolution or upload a smaller file.');
@@ -1278,6 +1279,8 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'file' 
       reportError(err.name === 'AbortError' ? new Error('Import extraction timed out after 30 seconds') : err, { source: 'SmartImportModal.extract' });
       if (err.name === 'AbortError') {
         setError('The extraction request timed out after 30 seconds. Please try again with a smaller file or clearer image.');
+      } else if (err.message === IMPORT_UNAVAILABLE_MESSAGE) {
+        setError(IMPORT_UNAVAILABLE_MESSAGE);
       } else {
         setError("Processing didn't finish. Try again or paste a smaller section.");
       }

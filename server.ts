@@ -1,5 +1,5 @@
 import { getTaskEstimatedHours } from './src/services/workloadService';
-import { sanitizeUrl, checkIfDateIsPast, validateAndResolveUrl, clampNumber, feedDescriptionToText, normalizeCourseLabel, courseStorageId, validateDueDate, parseNaturalLanguageDate, parseNaturalLanguageTaskFallback, parseIcsEvents, RecurringCalendarEventError, icsText, getNextDayDateString, parseAndValidateFeedDueAt, buildTaskVevent, normalizeTimeTo24h, normalizeImportedExamTimes } from './server/lib';
+import { sanitizeUrl, checkIfDateIsPast, validateAndResolveUrl, clampNumber, feedDescriptionToText, normalizeCourseLabel, courseStorageId, isAiBillingUnavailable, validateDueDate, parseNaturalLanguageDate, parseNaturalLanguageTaskFallback, parseIcsEvents, RecurringCalendarEventError, icsText, getNextDayDateString, parseAndValidateFeedDueAt, buildTaskVevent, normalizeTimeTo24h, normalizeImportedExamTimes } from './server/lib';
 export { sanitizeUrl, isPrivateOrReservedIp } from './server/lib';
 import express from 'express';
 import path from 'path';
@@ -231,6 +231,7 @@ async function generateGeminiContentWithFallback(ai: GoogleGenAI, params: any, s
         await retainAbortedAiSlot(slotId);
         throw err;
       }
+      if (isAiBillingUnavailable(err)) throw err;
       lastError = err;
       console.warn(`[GEMINI_CALL_WARN] Model ${model} failed:`, err?.status || err?.message || err);
       // If temporary overload or rate limit, brief delay and try candidate
@@ -1046,6 +1047,9 @@ Provide concise, helpful summaries and next actions.`,
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
       console.error(`[AI_EXTRACT_ERROR_${errorId}]`, err);
+      if (isAiBillingUnavailable(err)) {
+        return res.status(503).json({ error: 'Course-outline extraction is currently unavailable. You can still add courses and tasks manually.', errorId });
+      }
       if (err.status === 429 || (err.message && err.message.includes('RESOURCE_EXHAUSTED'))) {
         return res.status(429).json({ error: 'AI processing quota reached. Please wait a minute before trying again.', errorId });
       }

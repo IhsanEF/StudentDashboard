@@ -373,7 +373,7 @@ export function SyllabusImportBody({
           throw new Error('File exceeds server size limit (HTTP 413). Please compress the document or photo, or copy and paste the key sections into the "Paste Syllabus Text" tab.');
         }
         if (res.status === 503) {
-          throw new Error('Syllabus extraction is currently unavailable. Please try again later.');
+          throw new Error('Course-outline extraction is currently unavailable. Please try again later; you can still add courses and tasks manually.');
         }
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `Server responded with status ${res.status}`);

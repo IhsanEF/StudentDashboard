@@ -5,6 +5,7 @@ import { transform } from 'esbuild';
 import ts from 'typescript';
 import express from 'express';
 import helmet from 'helmet';
+import { isAiBillingUnavailable } from './lib';
 import type { AddressInfo } from 'node:net';
 
 // Exercise the actual production middleware with Firebase token verification mocked.
@@ -68,3 +69,13 @@ try {
   await new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
 }
 console.log('Auth HTTP: verified Google/password accepted, other providers/unverified/revoked tokens rejected, popup CSP allowed.');
+
+const generator = source.statements.find(n => ts.isFunctionDeclaration(n) && n.name?.text === 'generateGeminiContentWithFallback');
+assert.ok(generator);
+const generatorEnv: any = { isAiBillingUnavailable, console: { warn() {} } };
+runInNewContext((await transform(`${generator.getText(source)}; globalThis.generate = generateGeminiContentWithFallback;`, { loader: 'ts' })).code, generatorEnv);
+let generationCalls = 0;
+const billingError = { status: 402, message: 'Your prepayment credits are depleted.' };
+await assert.rejects(generatorEnv.generate({ models: { generateContent: async () => { generationCalls++; throw billingError; } } }, {}, 'test-slot'), error => error === billingError);
+assert.equal(generationCalls, 1, 'Changing models cannot fix depleted billing credits');
+console.log('AI billing failures stop model retries.');
