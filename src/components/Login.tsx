@@ -270,7 +270,7 @@ export default function Login({
           disabled={isBusy}
           className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl py-3 px-4 font-semibold text-sm transition-colors cursor-pointer border border-blue-200 flex items-center justify-center gap-2 disabled:opacity-60"
         >
-          Try it with sample data
+          See how it works with sample date
         </button>
         
         <div className="text-center pt-1">

@@ -125,7 +125,7 @@ export const COPY = {
   syncNow: 'Sync now',
   offlineNotice: "You're offline. Changes are saved on this device and will sync when you're back online.",
   leaveSampleData: 'Leave sample data',
-  tryWithSampleData: 'Try it with sample data',
+  tryWithSampleData: 'See how it works with sample date',
   popupBlockedFallback: 'Pop-up blocked? Sign in on this page instead',
 
   // Navigation & Tools
