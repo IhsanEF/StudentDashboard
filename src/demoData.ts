@@ -18,7 +18,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(-1), // Overdue
     status: 'Not Started',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Setup the initial repository and CI pipeline.',
     source_message_id: 'msg-1',
     last_email_at: toVancouverISO(subDays(now, 2)),
@@ -45,7 +45,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: toVancouverDateString(now), // Due today through Vancouver end of day
     status: 'Working',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Covers partial derivatives.',
     source_message_id: 'msg-2',
     last_email_at: toVancouverISO(subDays(now, 1)),
@@ -66,7 +66,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(3), // Due soon
     status: 'Not Started',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Submit the 1500 word draft on rhetorical analysis.',
     source_message_id: 'msg-3',
     last_email_at: toVancouverISO(subDays(now, 3)),
@@ -83,7 +83,7 @@ export function getDemoTasks(now = new Date()): Task[] {
       { id: 'st-demo-3-1', title: 'Formulate thesis statement and gather secondary sources', done: true, startDate: today, doByDate: date(1), duration: '1.5 hours' },
       { id: 'st-demo-3-2', title: 'Draft rhetorical analysis body paragraphs', done: false, startDate: date(1), doByDate: date(2), duration: '2.5 hours' },
       { id: 'st-demo-3-3', title: 'Revise argumentation and check MLA citations', done: false, startDate: date(2), doByDate: date(3), duration: '1.5 hours' },
-      { id: 'st-demo-3-4', title: 'Final proofread & submit on Canvas', done: false, startDate: date(3), doByDate: date(3), duration: '30 mins' }
+      { id: 'st-demo-3-4', title: 'Final proofread & submit the assignment', done: false, startDate: date(3), doByDate: date(3), duration: '30 mins' }
     ]
   },
   {
@@ -94,7 +94,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(-10),
     status: 'Done',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'TypeScript basics.',
     source_message_id: 'msg-4',
     last_email_at: toVancouverISO(subDays(now, 15)),
@@ -115,7 +115,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(-20),
     status: 'Done',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Initial laboratory environment check.',
     source_message_id: 'msg-cpsc-l1',
     last_email_at: toVancouverISO(subDays(now, 21)),
@@ -136,7 +136,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(-14),
     status: 'Done',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Express endpoint integration.',
     source_message_id: 'msg-cpsc-l2',
     last_email_at: toVancouverISO(subDays(now, 15)),
@@ -157,7 +157,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(-5),
     status: 'Done',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Midterm covering Modules 1-4.',
     source_message_id: 'msg-cpsc-mt',
     last_email_at: toVancouverISO(subDays(now, 6)),
@@ -178,7 +178,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: toVancouverISO(toDate(`${finalExam.date}T${finalExam.start_time}:00`, { timeZone: TIMEZONE })),
     status: 'Not Started',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Comprehensive final exam.',
     source_message_id: '',
     last_email_at: '',
@@ -199,7 +199,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(-18),
     status: 'Done',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Vectors in 3D.',
     source_message_id: '',
     last_email_at: '',
@@ -220,7 +220,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: date(-8),
     status: 'Done',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'Multivariable calculus midterm 1.',
     source_message_id: '',
     last_email_at: '',
@@ -241,7 +241,7 @@ export function getDemoTasks(now = new Date()): Task[] {
     due_at: '',
     status: 'Read',
     check_again_at: '',
-    canvas_url: 'https://canvas.ubc.ca',
+    canvas_url: 'https://example.com',
     summary: 'The midterm has been moved to SRC.',
     source_message_id: 'msg-5',
     last_email_at: toVancouverISO(now),
@@ -263,7 +263,7 @@ export function getDemoTasks(now = new Date()): Task[] {
   ].map(item => ({
     task_id: item.id, title: item.title, course: item.course, type: item.type,
     due_at: date(item.offset), estimated_hours: item.hours, status: 'Not Started' as const,
-    check_again_at: '', canvas_url: 'https://canvas.ubc.ca', summary: '', source_message_id: '',
+    check_again_at: '', canvas_url: 'https://example.com', summary: '', source_message_id: '',
     last_email_at: '', needs_review: false, points_earned: '', points_possible: '100',
     grade_text: '', feedback: '', progress_notes: '', next_action: '', last_interaction_at: ''
   }))
@@ -287,7 +287,7 @@ export const DEMO_CLASSES = [
     day: 'Monday' as const,
     start_time: '11:00',
     end_time: '12:00',
-    location: 'ICICS X250',
+    location: 'Room 101',
     instructor: 'Dr. A. Example',
     color: '#2563eb'
   },
@@ -299,7 +299,7 @@ export const DEMO_CLASSES = [
     day: 'Wednesday' as const,
     start_time: '11:00',
     end_time: '12:00',
-    location: 'ICICS X250',
+    location: 'Room 101',
     instructor: 'Dr. A. Example',
     color: '#2563eb'
   },
@@ -311,7 +311,7 @@ export const DEMO_CLASSES = [
     day: 'Friday' as const,
     start_time: '11:00',
     end_time: '12:00',
-    location: 'ICICS X250',
+    location: 'Room 101',
     instructor: 'Dr. A. Example',
     color: '#2563eb'
   },
@@ -323,7 +323,7 @@ export const DEMO_CLASSES = [
     day: 'Tuesday' as const,
     start_time: '14:00',
     end_time: '16:00',
-    location: 'ICICS 008',
+    location: 'Lab 1',
     instructor: 'TA Team',
     color: '#3b82f6'
   },
@@ -335,7 +335,7 @@ export const DEMO_CLASSES = [
     day: 'Tuesday' as const,
     start_time: '09:30',
     end_time: '11:00',
-    location: 'LSK 200',
+    location: 'Room 202',
     instructor: 'Dr. B. Example',
     color: '#059669'
   },
@@ -347,7 +347,7 @@ export const DEMO_CLASSES = [
     day: 'Thursday' as const,
     start_time: '09:30',
     end_time: '11:00',
-    location: 'LSK 200',
+    location: 'Room 202',
     instructor: 'Dr. B. Example',
     color: '#059669'
   },
@@ -359,7 +359,7 @@ export const DEMO_CLASSES = [
     day: 'Tuesday' as const,
     start_time: '12:00',
     end_time: '13:30',
-    location: 'BUCH A104',
+    location: 'Room 104',
     instructor: 'Prof. C. Example',
     color: '#7c3aed'
   },
@@ -371,7 +371,7 @@ export const DEMO_CLASSES = [
     day: 'Thursday' as const,
     start_time: '12:00',
     end_time: '13:30',
-    location: 'BUCH A104',
+    location: 'Room 104',
     instructor: 'Prof. C. Example',
     color: '#7c3aed'
   }
@@ -394,9 +394,9 @@ export function getDemoExams(now = new Date()) {
     date: addDaysToDateStr(today, 34),
     start_time: '18:00',
     end_time: '19:30',
-    location: 'SRC Gym A',
+    location: 'Main Hall A',
     weight_percent: 20,
-    notes: 'Non-programmable calculator permitted. Bring UBC card.'
+    notes: 'Non-programmable calculator permitted. Bring any required identification.'
   },
   {
     id: 'demo-exam-2',
@@ -405,7 +405,7 @@ export function getDemoExams(now = new Date()) {
     date: addDaysToDateStr(today, 73),
     start_time: '08:30',
     end_time: '11:00',
-    location: 'SRC Gym C',
+    location: 'Main Hall C',
     weight_percent: 35,
     notes: 'Closed book exam. 1 single-sided cheat sheet permitted.'
   },
@@ -416,9 +416,9 @@ export function getDemoExams(now = new Date()) {
     date: addDaysToDateStr(today, 75),
     start_time: '09:00',
     end_time: '11:30',
-    location: 'OSBO A',
+    location: 'Room 301',
     weight_percent: 45,
-    notes: 'UBC ID required for desk entry.'
+    notes: 'Bring any required identification.'
   },
   {
     id: 'demo-exam-4',
@@ -427,7 +427,7 @@ export function getDemoExams(now = new Date()) {
     date: addDaysToDateStr(today, 76),
     start_time: '15:30',
     end_time: '18:00',
-    location: 'BUCH B201',
+    location: 'Room 201',
     weight_percent: 40,
     notes: 'Bring blue or black pen and dictionary.'
   }
@@ -439,13 +439,13 @@ export const DEMO_EXAMS = getDemoExams();
 export const DEMO_GROUPS: GroupProject[] = [
   {
     id: 'demo-group-1',
-    name: 'CPSC 310 Term Project: InsightUBC',
+    name: 'CPSC 310 Term Project: Learning Portal',
     course_code: 'CPSC 310',
-    description: 'Query engine and REST frontend for UBC campus datasets and room availability scheduling.',
+    description: 'Query engine and REST frontend for sample datasets and room availability scheduling.',
     created_by: 'demo-student',
     created_at: toVancouverISO(subDays(now, 14)),
     updated_at: toVancouverISO(subDays(now, 1)),
-    invite_code: 'UBC310',
+    invite_code: 'DEMO310',
     members: ['demo-student', 'teammate-sarah', 'teammate-alex', 'teammate-jordan'],
     member_details: {
       'demo-student': {

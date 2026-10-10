@@ -168,6 +168,20 @@ export function feedDescriptionToText(raw: string, maxLength = 5000): string {
   return boundary > 0 ? text.slice(0, boundary) : '';
 }
 
+export function normalizeCourseLabel(raw?: string | null): string {
+  if (typeof raw !== 'string') return 'General';
+  return raw.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100) || 'General';
+}
+
+// Preserve existing ASCII course IDs while avoiding collisions between non-Latin subjects.
+export function courseStorageId(label: string): string {
+  const normalized = normalizeCourseLabel(label);
+  const key = normalized.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+  return 'course-' + (/[^\x00-\x7f]/.test(normalized)
+    ? crypto.createHash('sha256').update(normalized.toLocaleLowerCase()).digest('hex').slice(0, 24)
+    : key);
+}
+
 const UBC_COURSE_REGEX = /\b([A-Z]{2,4})(?:_[A-Z])?[\s_-]*(\d{3}[A-Z]?)\b/i;
 
 export function normalizeUbcCourseCode(raw?: string | null): string {
@@ -866,7 +880,7 @@ export function buildTaskVevent(t: any, nowUtcString: string, fallbackId: string
   const cleanEffort = t.estimated_hours ? icsText(`Effort: ~${t.estimated_hours}h`) : '';
   const cleanWeight = t.points_possible ? icsText(`Weight/Points: ${t.points_possible}`) : '';
   const cleanSummary = icsText(t.summary || '');
-  const url = sanitizeUrl(t.canvas_url) || 'https://canvas.ubc.ca';
+  const url = sanitizeUrl(t.canvas_url);
 
   const descParts: string[] = [
     `Course: ${cleanCourse}`,
@@ -881,7 +895,7 @@ export function buildTaskVevent(t: any, nowUtcString: string, fallbackId: string
   const description = descParts.join('\\n');
 
   const rawId = String(t.task_id || '').replace(/[^a-zA-Z0-9_-]/g, '') || fallbackId;
-  const safeUid = `task-${rawId}@ubc-dashboard`;
+  const safeUid = `task-${rawId}@my-lms`;
 
   // STATUS: RFC 5545 allows only CONFIRMED, CANCELLED, TENTATIVE for VEVENT
   const isCancelled = cleanStatus.toLowerCase() === 'cancelled';
@@ -898,7 +912,7 @@ export function buildTaskVevent(t: any, nowUtcString: string, fallbackId: string
   }
   lines.push(`SUMMARY:[${cleanCourse}] ${cleanTitle}`);
   lines.push(`DESCRIPTION:${description}`);
-  lines.push(`LOCATION:UBC Vancouver`);
+
   lines.push(`STATUS:${statusVal}`);
   if (url) {
     lines.push(`URL:${url.replace(/[\r\n\x00-\x1F\x7F]/g, '')}`);

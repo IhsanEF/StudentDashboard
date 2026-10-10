@@ -51,7 +51,7 @@ export function matchCourse(
   if (codeMatch) {
     const rawFound = codeMatch[1].toUpperCase().replace(/\s+/g, ' ');
     const compactFound = rawFound.replace(/\s+/g, '');
-    
+
     // Check if it matches any student course directly
     const exactStudentMatch = normalizedCourses.find(
       c => c.code.toUpperCase().replace(/\s+/g, '') === compactFound
@@ -81,7 +81,7 @@ export function matchCourse(
     for (const c of normalizedCourses) {
       const codeUpper = c.code.toUpperCase();
       const dept = codeUpper.split(/\s+/)[0] || '';
-      
+
       // Match department word boundary: e.g. "chem" for "CHEM 121", "phys" for "PHYS 101"
       if (dept && new RegExp(`\\b${dept}\\b`, 'i').test(lower)) {
         return c.code;
@@ -206,7 +206,7 @@ export function parseNaturalLanguageDate(dateExpr: string, refDate: Date = new D
 
   // 5. Month matching BEFORE weekday matching! (e.g. "Mon Oct 12" -> Oct 12, "Oct 3")
   const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-  
+
   // Pattern A: "Oct 3", "October 12th", "Oct 12, 2026"
   const monthFirstMatch = lower.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s*,?\s*(\d{4}))?\b/i);
   if (monthFirstMatch) {
@@ -466,10 +466,10 @@ export function QuickAddModal({
       setTitle('');
       setCourse(defaultCourse || (courseOptions[0] || 'General'));
       setType('assignment');
-      
+
       const todayVan = toVancouverDateString(new Date());
       setDueAt(`${todayVan}T23:59`);
-      
+
       setStatus('Not Started');
       setNotes('');
       setEstimatedHours('3');
@@ -514,9 +514,9 @@ export function QuickAddModal({
           'Content-Type': 'application/json',
           ...authHeaders
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text,
-          courses: studentCourseCodes 
+          courses: studentCourseCodes
         })
       });
 
@@ -569,7 +569,7 @@ export function QuickAddModal({
     if (draft.title) setTitle(draft.title);
     if (draft.course) setCourse(draft.course);
     if (draft.type) setType(draft.type);
-    
+
     const parsedDue = parseTaskDueDate(draft.due_at);
     const needsDate = draft.dateUnrecognised || !parsedDue || parsedDue.getTime() < Date.now();
     setDueAt(needsDate ? '' : formatInTimeZone(parsedDue!, TIMEZONE, "yyyy-MM-dd'T'HH:mm"));
@@ -603,8 +603,8 @@ export function QuickAddModal({
       const parsedWeight = typeof weight === 'number' ? weight : parseFloat(weight);
       const finalWeight = Number.isFinite(parsedWeight) && parsedWeight > 0 ? Math.min(100, parsedWeight) : undefined;
 
-      const uniqueSuffix = typeof crypto !== 'undefined' && crypto.randomUUID 
-        ? crypto.randomUUID().slice(0, 8) 
+      const uniqueSuffix = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID().slice(0, 8)
         : Math.random().toString(36).slice(2, 9);
 
       const taskToSave = {
@@ -711,7 +711,7 @@ export function QuickAddModal({
                         handleParseSentence();
                       }
                     }}
-                    placeholder='e.g., "CPSC 110 lab 3 due next Friday ~2h worth 10%"'
+                    placeholder='e.g., "Math homework due next Friday ~2h worth 10%"'
                     className="w-full bg-white border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 transition-all pr-24"
                   />
                   <button
@@ -931,7 +931,7 @@ export function QuickAddModal({
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     Detailed Academic Tracking
                   </p>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label htmlFor="quick-add-points-earned" className="block text-xs font-medium text-slate-600 mb-1">

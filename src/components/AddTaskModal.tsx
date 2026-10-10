@@ -30,7 +30,7 @@ export interface QuickAddDraft {
 
 export const generateLocalDraft = (text: string): QuickAddDraft => {
   const lower = text.toLowerCase();
-  
+
   // Course match
   let course = 'General';
   const courseMatch = text.match(/\b([A-Z]{2,4}\s*\d{3}[A-Z]?)\b/i);
@@ -247,11 +247,11 @@ export default function AddTaskModal({
       setIdentityErrors({ title: '', course: '' });
       setCourse(defaultCourse || (courseOptions[0] || 'General'));
       setType('assignment');
-      
+
       // Default to today at 23:59 in Vancouver
       const todayVan = toVancouverDateString(new Date());
       setDueAt(`${todayVan}T23:59`);
-      
+
       setStatus('Not Started');
       setNotes('');
       setEstimatedHours(3);
@@ -340,7 +340,7 @@ export default function AddTaskModal({
     if (draft.title) setTitle(draft.title);
     if (draft.course) setCourse(draft.course);
     if (draft.type) setType(draft.type);
-    
+
     const parsedDue = parseTaskDueDate(draft.due_at);
     const needsDate = draft.dateUnrecognised || !parsedDue || parsedDue.getTime() < Date.now();
     setDueAt(needsDate ? '' : formatInTimeZone(parsedDue!, TIMEZONE, "yyyy-MM-dd'T'HH:mm"));
@@ -374,8 +374,8 @@ export default function AddTaskModal({
       const parsedWeight = typeof weight === 'number' ? weight : parseFloat(weight);
       const finalWeight = Number.isFinite(parsedWeight) && parsedWeight > 0 ? Math.min(100, parsedWeight) : undefined;
 
-      const uniqueSuffix = typeof crypto !== 'undefined' && crypto.randomUUID 
-        ? crypto.randomUUID().slice(0, 8) 
+      const uniqueSuffix = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID().slice(0, 8)
         : Math.random().toString(36).slice(2, 9);
 
       const taskToSave: Task = {
@@ -481,7 +481,7 @@ export default function AddTaskModal({
                       handleParseSentence();
                     }
                   }}
-                  placeholder='e.g., "CPSC 110 lab 3 due next Friday ~2h worth 10%"'
+                  placeholder='e.g., "Math homework due next Friday ~2h worth 10%"'
                   className="w-full bg-white border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 transition-all pr-20"
                 />
                 <button
@@ -548,7 +548,7 @@ export default function AddTaskModal({
             {!isSimple && (
               <details className="group bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
                 <summary className="px-4 py-2.5 text-xs font-bold text-slate-700 uppercase flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors select-none">
-                  <span>More (Grading &amp; Canvas link)</span>
+                  <span>More (Grading &amp; resource link)</span>
                   <ChevronDown size={16} className="text-slate-400 group-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 pt-2 border-t border-slate-200 space-y-3">
@@ -628,7 +628,7 @@ export default function AddTaskModal({
 
                   <div>
                     <label htmlFor="task-canvas-url" className="text-[11px] font-bold text-slate-500 uppercase block mb-1">
-                      Canvas / Submission URL
+                      Resource / submission link
                     </label>
                     <input
                       id="task-canvas-url"
@@ -636,7 +636,7 @@ export default function AddTaskModal({
                       value={canvasUrl}
                       onChange={(e) => setCanvasUrl(e.target.value)}
                       className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-blue-500 text-xs"
-                      placeholder="https://canvas.ubc.ca/..."
+                      placeholder="https://example.com/assignment"
                     />
                   </div>
                 </div>

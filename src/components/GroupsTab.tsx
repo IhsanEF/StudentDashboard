@@ -5,19 +5,19 @@ import { auth, db } from '../auth';
 import { doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import { GroupProject, GroupTask, GroupMember, TaskPriority, GroupTaskStatus, TaskStatus } from '../types';
 import { getCourseColor, formatInTimeZone, formatVancouverDate, zonedTimeToUtc, TIMEZONE } from '../utils';
-import { 
-  Users, 
-  Plus, 
-  Copy, 
-  Check, 
-  CheckSquare, 
-  Clock, 
-  UserPlus, 
-  LogOut, 
-  Calendar, 
-  PieChart, 
-  FolderGit2, 
-  CheckCircle2, 
+import {
+  Users,
+  Plus,
+  Copy,
+  Check,
+  CheckSquare,
+  Clock,
+  UserPlus,
+  LogOut,
+  Calendar,
+  PieChart,
+  FolderGit2,
+  CheckCircle2,
   Circle,
   Trash2,
   Edit2,
@@ -35,15 +35,15 @@ function groupFormError(error: { code?: string; message?: string }, action: stri
 }
 
 export default function GroupsTab() {
-  const { 
-    groups, 
-    activeGroupId, 
-    setActiveGroupId, 
-    groupTasks, 
-    createGroup, 
-    joinGroupByCode, 
-    leaveGroup, 
-    saveGroupTaskAction, 
+  const {
+    groups,
+    activeGroupId,
+    setActiveGroupId,
+    groupTasks,
+    createGroup,
+    joinGroupByCode,
+    leaveGroup,
+    saveGroupTaskAction,
     deleteGroupTaskAction,
     isDemoMode,
     showToast,
@@ -177,7 +177,7 @@ export default function GroupsTab() {
 
       const displayName = typeof rawVal.displayName === 'string' && rawVal.displayName.trim()
         ? rawVal.displayName.trim()
-        : 'UBC Student';
+        : 'Student';
       const role: 'owner' | 'member' = rawVal.role === 'owner' ? 'owner' : 'member';
       const email = typeof rawVal.email === 'string' ? rawVal.email : '';
       const photoURL = typeof rawVal.photoURL === 'string' ? rawVal.photoURL : '';
@@ -199,7 +199,7 @@ export default function GroupsTab() {
         if (!result.some(m => m.uid === mUid)) {
           result.push({
             uid: mUid,
-            displayName: mUid === currentGroup.created_by ? 'Group Creator' : 'UBC Student',
+            displayName: mUid === currentGroup.created_by ? 'Group Creator' : 'Student',
             email: '',
             role: mUid === currentGroup.created_by ? 'owner' : 'member',
             joinedAt: currentGroup.created_at || new Date().toISOString()
@@ -313,12 +313,12 @@ export default function GroupsTab() {
             created_by: 'demo-student',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            invite_code: `UBC${Math.floor(100 + Math.random() * 900)}`,
+            invite_code: `LMS${Math.floor(100 + Math.random() * 900)}`,
             members: ['demo-student'],
             member_details: {
               'demo-student': {
                 uid: 'demo-student',
-                displayName: 'UBC Student',
+                displayName: 'Student',
                 email: '',
                 role: 'owner',
                 joinedAt: new Date().toISOString()
@@ -340,8 +340,8 @@ export default function GroupsTab() {
         setNewGroupDesc('');
         setNewGroupTargetDate('');
         setCreateError(null);
-        showToast({ 
-          message: `Group "${created.name}" created! Invite code: ${created.invite_code}` 
+        showToast({
+          message: `Group "${created.name}" created! Invite code: ${created.invite_code}`
         });
       } else {
         throw new Error('Could not create group.');
@@ -358,12 +358,12 @@ export default function GroupsTab() {
           created_by: 'demo-student',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          invite_code: `UBC${Math.floor(100 + Math.random() * 900)}`,
+          invite_code: `LMS${Math.floor(100 + Math.random() * 900)}`,
           members: ['demo-student'],
           member_details: {
             'demo-student': {
               uid: 'demo-student',
-              displayName: 'UBC Student',
+              displayName: 'Student',
               email: '',
               role: 'owner',
               joinedAt: new Date().toISOString()
@@ -379,8 +379,8 @@ export default function GroupsTab() {
         setNewGroupDesc('');
         setNewGroupTargetDate('');
         setCreateError(null);
-        showToast({ 
-          message: `Group "${fallbackGroup.name}" created! Invite code: ${fallbackGroup.invite_code}` 
+        showToast({
+          message: `Group "${fallbackGroup.name}" created! Invite code: ${fallbackGroup.invite_code}`
         });
         return;
       }
@@ -658,7 +658,7 @@ export default function GroupsTab() {
   const handleToggleSubtaskDone = async (task: GroupTask, subtaskId: string) => {
     if (!currentGroup || task.group_id !== currentGroup.id) return;
     try {
-      const updatedSubtasks = (task.subtasks || []).map(st => 
+      const updatedSubtasks = (task.subtasks || []).map(st =>
         st.id === subtaskId ? { ...st, done: !st.done } : st
       );
       if (!isDemoMode && auth.currentUser?.uid) {
@@ -725,7 +725,7 @@ export default function GroupsTab() {
   const handleAddSubtaskDraft = () => {
     if (!newSubtaskTitle.trim()) return;
     setSubtasksList(prev => [
-      ...prev, 
+      ...prev,
       { id: `st-${Date.now()}-${prev.length}`, title: newSubtaskTitle.trim(), done: false }
     ]);
     setNewSubtaskTitle('');
@@ -867,7 +867,7 @@ export default function GroupsTab() {
                     {membersList.map((m, idx) => (
                       <div
                         key={m.uid || idx}
-                        title={`${m.displayName || 'UBC Student'} (${m.role || 'member'})`}
+                        title={`${m.displayName || 'Student'} (${m.role || 'member'})`}
                         className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-indigo-900 shadow-xs uppercase"
                       >
                         {(m.displayName || '?').substring(0, 2)}
@@ -938,7 +938,7 @@ export default function GroupsTab() {
                 >
                   <option value="all">All Assignees</option>
                   {membersList.map(m => (
-                    <option key={m.uid} value={m.uid}>{m.displayName || 'UBC Student'}</option>
+                    <option key={m.uid} value={m.uid}>{m.displayName || 'Student'}</option>
                   ))}
                 </select>
 
@@ -1014,7 +1014,7 @@ export default function GroupsTab() {
                               <h4 className={`text-sm font-bold ${isDone ? 'line-through text-slate-600' : 'text-slate-900'}`}>
                                 {task.title}
                               </h4>
-                              
+
                               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                                 task.priority === 'Critical' ? 'bg-rose-100 text-rose-700' :
                                 task.priority === 'High' ? 'bg-amber-100 text-amber-700' :
@@ -1138,7 +1138,7 @@ export default function GroupsTab() {
                         {(member.displayName || '?').substring(0, 2)}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900">{member.displayName || 'UBC Student'}</h4>
+                        <h4 className="text-sm font-bold text-slate-900">{member.displayName || 'Student'}</h4>
                         <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
                           {member.role || 'Member'}
                         </span>
@@ -1151,7 +1151,7 @@ export default function GroupsTab() {
                       {isOwner && member.uid !== currentUserId && (
                         <button
                           type="button"
-                          onClick={() => handleRemoveMember(member.uid, member.displayName || 'UBC Student')}
+                          onClick={() => handleRemoveMember(member.uid, member.displayName || 'Student')}
                           title={`Remove ${member.displayName || 'Member'} from group`}
                           aria-label={`Remove ${member.displayName || 'Member'} from group`}
                           className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
@@ -1490,13 +1490,13 @@ export default function GroupsTab() {
             <form onSubmit={handleJoinSubmit} className="space-y-4 mt-4">
               <div>
                 <label htmlFor="join-group-code" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Invite Code (e.g. UBC310)
+                  Invite Code (e.g. DEMO310)
                 </label>
                 <input
                   id="join-group-code"
                   type="text"
                   required
-                  placeholder="UBC310"
+                  placeholder="DEMO310"
                   value={joinCodeInput}
                   onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl text-base font-black tracking-widest text-slate-900 uppercase focus:outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -1573,7 +1573,7 @@ export default function GroupsTab() {
                   >
                     <option value="">Unassigned</option>
                     {membersList.map(m => (
-                      <option key={m.uid} value={m.uid}>{m.displayName || 'UBC Student'}</option>
+                      <option key={m.uid} value={m.uid}>{m.displayName || 'Student'}</option>
                     ))}
                   </select>
                 </div>

@@ -25,17 +25,17 @@ export const COPY = {
   // Review Inbox
   reviewInboxOneItem: '1 imported item to check',
   checkImportedItems: 'Check imported items',
-  newFromCanvas: (count: number) => `New from Canvas (${count})`,
+  newFromCanvas: (count: number) => `Newly imported (${count})`,
   keepAll: 'Keep all',
   checkDate: 'Check date',
   notesAndDatesKept: 'Your own notes and dates are kept.',
 
   // Import
   importBtn: 'Import',
-  importTooltip: 'Add coursework from your Canvas calendar link, a pasted Canvas email, a syllabus file, or a screenshot',
-  importModalIntro: 'Canvas does not let apps connect directly, so bring your coursework in one of these ways.',
-  tabCanvasCalendarLink: 'Canvas calendar link',
-  tabPasteEmail: 'Paste a Canvas email',
+  importTooltip: 'Add coursework manually or upload a course outline, document, or screenshot',
+  importModalIntro: 'Upload a course outline or paste course details to preview your subjects, tasks, and deadlines.',
+  tabCanvasCalendarLink: 'Course outline',
+  tabPasteEmail: 'Paste course details',
   tabUploadFile: 'Upload a file',
   tabScreenshot: 'Screenshot',
   tabSyllabus: 'Syllabus',
@@ -43,12 +43,12 @@ export const COPY = {
   whatWeFound: 'What we found',
 
   // Syllabus
-  addSyllabus: 'Add syllabus',
-  noWeightsAddSyllabus: 'No grade weights yet - add syllabus',
+  addSyllabus: 'Upload course outline',
+  noWeightsAddSyllabus: 'No grade weights yet - upload a course outline',
 
   // Task Add / Edit
   addATask: 'Add a task',
-  describeInOneSentence: "Describe it in one sentence, e.g. 'CPSC 110 lab 3 due next Friday' - press Enter",
+  describeInOneSentence: "Describe it in one sentence, e.g. 'Math homework due next Friday' - press Enter",
   checkBtn: 'Check',
   editTask: 'Edit task',
   breakIntoSteps: 'Plan the steps',
@@ -68,7 +68,7 @@ export const COPY = {
   gradeAndFeedback: 'Grade & feedback',
   instructorFeedback: 'Instructor feedback',
   nextStep: 'Next step',
-  canvasLink: 'Canvas link',
+  canvasLink: 'Resource link',
 
   // Workload
   workloadNextWeek: (hrs: number, intensity: string) => `Next week: ${hrs} h of work - ${intensity}`,
@@ -94,7 +94,7 @@ export const COPY = {
 
   // Schedule & Exams
   twoExamsClose: 'Two exams close together',
-  examHardship: 'Exam hardship (UBC rule: 3 exams in 24 hours)',
+  examHardship: 'Exam schedule conflict',
 
   // Settings
   settings: 'Settings',
@@ -105,7 +105,7 @@ export const COPY = {
   morningEmail: 'Morning email: what is due today',
   sundayEmail: 'Sunday email: the week ahead',
   calendar: 'Calendar',
-  yourCanvasCalendarLink: "Your Canvas calendar link - paste the 'Calendar feed' link from Canvas; we check it once a day for new or changed deadlines",
+  yourCanvasCalendarLink: "Upload course outlines or add deadlines manually",
   putDeadlinesInCalendar: 'Put my deadlines in Google or Apple Calendar',
   createCalendarLink: 'Create my calendar link',
   makeNewLink: 'Make a new link',
@@ -140,7 +140,7 @@ export const COPY = {
 
   // Empty states
   nothingHereYet: 'Nothing here yet',
-  importFromCanvas: 'Import from Canvas',
+  importFromCanvas: 'Upload a course outline',
   lookAtSampleData: 'Look at sample data',
   notifications: 'Notifications'
 };

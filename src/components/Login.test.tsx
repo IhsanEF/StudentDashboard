@@ -46,6 +46,8 @@ function text(tree: any): string {
 const render = () => { index = 0; return module.exports.default({ onLogin: (user: any) => users.push(user), onDemoLogin() {} }); };
 const button = (label: string) => nodes(render()).find(n => n.type === 'button' && text(n) === label);
 const input = (id: string) => nodes(render()).find(n => n.props?.id === id);
+assert.match(text(render()), /My LMS/);
+assert.doesNotMatch(text(render()), /UBC|Canvas/);
 assert.ok(button('Sign in with Google'));
 assert.ok(button('Sign in with email'));
 await button('Sign in with Google').props.onClick();

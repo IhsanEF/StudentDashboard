@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  FileText, Upload, Sparkles, AlertCircle, CheckCircle, X, 
+import {
+  FileText, Upload, Sparkles, AlertCircle, CheckCircle, X,
   BookOpen, Percent, Calendar, Clock, User, Mail, ShieldAlert,
   Plus, Trash2, ArrowRight, Loader2, CheckSquare, RotateCcw,
   Sliders, Info, HelpCircle, Eye, FileSpreadsheet, ImageIcon
@@ -64,10 +64,20 @@ async function compressImageBase64(
 
 const SAMPLE_SYLLABI = [
   {
+    name: 'Grade 5 Mathematics',
+    text: `Course: Grade 5 Mathematics
+Teacher: A. Example
+Topics: Fractions, geometry, and problem solving.
+Grading: Homework 40%, Projects 30%, Quizzes 30%.
+Homework: Fractions worksheet, due 2026-10-20.
+Project: Design a shape poster, due 2026-10-28.
+Quiz: Fractions and decimals, 2026-11-03.`
+  },
+  {
     name: 'CPSC 310 (Software Eng)',
-    text: `UNIVERSITY OF BRITISH COLUMBIA
+    text: `SAMPLE COURSE OUTLINE
 Course: CPSC 310 - Introduction to Software Engineering (Term 1, 2026)
-Instructor: Dr. Reid Holmes (rholmes@cs.ubc.ca)
+Instructor: A. Example (teacher@example.com)
 Office Hours: Tuesdays 2:00 PM - 3:30 PM (ICICS 244)
 Lectures: Mon/Wed/Fri 11:00 AM - 12:00 PM (DMP 301)
 
@@ -91,9 +101,9 @@ DELIVERABLES & SCHEDULE:
   },
   {
     name: 'MATH 200 (Multivariable Calc)',
-    text: `UBC Department of Mathematics
+    text: `Sample Mathematics Course
 MATH 200 - Calculus III (Fall 2026)
-Instructor: Dr. Brian Wetton (wetton@math.ubc.ca)
+Instructor: B. Example (teacher@example.com)
 Meeting Times: Tue/Thu 9:30 AM - 11:00 AM (MATX 1100)
 Office Hours: Wed 1:00 PM - 3:00 PM
 
@@ -136,7 +146,7 @@ export function SyllabusImportBody({
   isSimpleView = false
 }: SyllabusImportBodyProps) {
   const { tasks: existingTasks, courses: existingCourses = [], addTask, updateCourse, isDemoMode, notificationPrefs } = useTasksContext();
-  
+
   // Step 1: Input state
   const [inputTab, setInputTab] = useState<'upload' | 'paste'>('upload');
   const [file, setFile] = useState<File | null>(null);
@@ -663,8 +673,8 @@ export function SyllabusImportBody({
     <div className="space-y-6">
       {/* Status Notices */}
       {error && (
-        <div 
-          role="alert" 
+        <div
+          role="alert"
           className="bg-red-50 text-red-800 p-4 rounded-xl flex items-start gap-3 border border-red-200"
         >
           <AlertCircle className="shrink-0 mt-0.5 text-red-600" size={18} />
@@ -676,8 +686,8 @@ export function SyllabusImportBody({
       )}
 
           {successMsg && (
-            <div 
-              role="status" 
+            <div
+              role="status"
               className="bg-emerald-50 text-emerald-800 p-4 rounded-xl flex items-center gap-3 border border-emerald-200"
             >
               <CheckCircle className="shrink-0 text-emerald-600" size={20} />
@@ -690,7 +700,7 @@ export function SyllabusImportBody({
              ══════════════════════════════════════════════════════════════════════ */}
           {!extractedCourse && (
             <div className="space-y-5">
-              
+
               {/* Tabs: File Upload vs Text Paste */}
               <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold max-w-sm">
                 <button
@@ -811,7 +821,7 @@ export function SyllabusImportBody({
               {!isSimpleView && (
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
                   <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
-                    Try with UBC Sample Syllabi:
+                    Try a sample course outline:
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {SAMPLE_SYLLABI.map((sample, idx) => (
@@ -848,7 +858,7 @@ export function SyllabusImportBody({
              ══════════════════════════════════════════════════════════════════════ */}
           {extractedCourse && (
             <div className="space-y-6 animate-in fade-in">
-              
+
               {/* Step indicator header */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-indigo-50/80 border border-indigo-200/70 p-4 rounded-xl gap-2">
                 <div>
@@ -965,7 +975,7 @@ export function SyllabusImportBody({
                       value={extractedCourse.instructor || ''}
                       onChange={(e) => setExtractedCourse({ ...extractedCourse, instructor: e.target.value })}
                       className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="e.g. Dr. Reid Holmes"
+                      placeholder="e.g. A. Example"
                     />
                   </div>
                   <div>
@@ -978,7 +988,7 @@ export function SyllabusImportBody({
                       value={extractedCourse.instructor_email || ''}
                       onChange={(e) => setExtractedCourse({ ...extractedCourse, instructor_email: e.target.value })}
                       className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="e.g. rholmes@cs.ubc.ca"
+                      placeholder="e.g. teacher@example.com"
                     />
                   </div>
                   <div>
@@ -1044,8 +1054,8 @@ export function SyllabusImportBody({
 
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-                      Math.abs(totalWeight - 100) < 0.1 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
+                      Math.abs(totalWeight - 100) < 0.1
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
                         : 'bg-amber-50 text-amber-800 border-amber-300'
                     }`}>
                       Total Weight: {totalWeight.toFixed(1)}% {Math.abs(totalWeight - 100) < 0.1 ? '✓' : '(Target: 100%)'}
@@ -1136,7 +1146,7 @@ export function SyllabusImportBody({
                     <p className="text-[11px] text-slate-500">
                       {extractedTasks.filter(t => duplicateTaskIds.has(t.task_id)).length > 0
                         ? `${extractedTasks.filter(t => duplicateTaskIds.has(t.task_id)).length} already in your dashboard (unselected)`
-                        : "Syllabus items are tagged so you know they won't automatically sync from Canvas feeds."}
+                        : "Review imported items before adding them to your dashboard."}
                     </p>
                   </div>
 
@@ -1364,7 +1374,7 @@ export default function SyllabusImportModal({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       ref={modalRef}
       onClick={handleBackdropClick}
       role="dialog"
@@ -1373,7 +1383,7 @@ export default function SyllabusImportModal({
       className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in"
     >
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
-        
+
         {/* Header */}
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/75">
           <div className="flex items-center gap-3">
@@ -1394,7 +1404,7 @@ export default function SyllabusImportModal({
               </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             aria-label="Close modal"
             className="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"

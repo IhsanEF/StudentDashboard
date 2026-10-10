@@ -29,8 +29,8 @@ export default function Announcements() {
       {announcements.map(item => {
         const isRead = item.status === 'Read';
         return (
-          <div 
-            key={item.task_id} 
+          <div
+            key={item.task_id}
             className={`bg-white rounded-2xl border p-5 shadow-sm flex flex-col md:flex-row gap-4 md:items-center transition-all ${
               isRead ? 'border-slate-200 opacity-75' : 'border-blue-200/80 ring-1 ring-blue-100'
             }`}
@@ -38,7 +38,7 @@ export default function Announcements() {
             <div className={`p-3 rounded-xl shrink-0 self-start md:self-center ${isRead ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-600'}`}>
               <Megaphone size={24} />
             </div>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getCourseColor(item.course)}`}>
@@ -56,7 +56,7 @@ export default function Announcements() {
               <h4 className={`font-bold text-lg ${isRead ? 'text-slate-700' : 'text-slate-900'}`}>{item.title}</h4>
               <p className="text-slate-600 text-sm mt-1 whitespace-pre-line">{item.summary}</p>
             </div>
-            
+
             <div className="flex items-center gap-2 self-start md:self-center shrink-0">
               {/* Toggle Read */}
               <button
@@ -65,8 +65,8 @@ export default function Announcements() {
                 title={isRead ? 'Mark as unread' : 'Mark as read'}
                 aria-label={isRead ? `Mark ${item.title} as unread` : `Mark ${item.title} as read`}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
-                  isRead 
-                    ? 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200' 
+                  isRead
+                    ? 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
                     : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
                 }`}
               >
@@ -98,11 +98,11 @@ export default function Announcements() {
 
               {/* Canvas External Link */}
               {sanitizeCanvasUrl(item.canvas_url) && (
-                <a 
-                  href={sanitizeCanvasUrl(item.canvas_url)} 
+                <a
+                  href={sanitizeCanvasUrl(item.canvas_url)}
                   title={`Open ${getUrlHostname(item.canvas_url)}`}
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={`View announcement for ${item.title}`}
                   className="flex items-center justify-center bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 hover:border-blue-200 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors gap-1.5"
                 >
@@ -113,12 +113,12 @@ export default function Announcements() {
           </div>
         );
       })}
-      
+
       {announcements.length === 0 && (
         <div className="text-center py-16 px-4 bg-white rounded-2xl border border-dashed border-slate-300 space-y-2">
           <p className="font-semibold text-slate-800 text-base">No Announcements Found</p>
           <p className="text-slate-500 text-xs max-w-sm mx-auto">
-            Whenever you receive a course announcement or email notification from Canvas, paste it in <strong>Smart Import &rarr; Paste a Canvas email</strong> to track updates here.
+            When you have course notes or an announcement to keep, paste them in <strong>Smart Import &rarr; Paste course details</strong> to track updates here.
           </p>
         </div>
       )}

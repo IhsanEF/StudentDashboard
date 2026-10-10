@@ -73,12 +73,10 @@ let prevented = false;
 h.nodes().find(n => n.props?.role === 'tablist').props.onKeyDown({ key: 'ArrowRight', preventDefault() { prevented = true; } }); h.render();
 assert.ok(prevented); assert.equal(h.focused, 'tab-calendar-btn'); assert.equal(h.byId('tab-calendar-btn').props['aria-selected'], true);
 assert.equal(h.byId('settings-tab-panel').props['aria-labelledby'], 'tab-calendar-btn');
-const secret = 'https://canvas.ubc.ca/feeds/calendars/user_SECRET.ics';
-h.byId('canvas-calendar-url').props.onChange({ target: { value: secret } }); h.render();
-h.nodes().find(n => n.props?.['aria-controls'] === 'canvas-calendar-url').props.onClick(); h.render();
-assert.equal(h.byId('canvas-calendar-url').props.value, 'canvas.ubc.ca / …'); assert.ok(h.byId('canvas-calendar-url').props.readOnly);
-assert.ok(!h.text().includes('user_SECRET'), 'Hidden URL is absent from rendered props');
-h.nodes().find(n => n.props?.['aria-controls'] === 'canvas-calendar-url').props.onClick(); h.render(); assert.equal(h.byId('canvas-calendar-url').props.value, secret);
+h.context.notificationPrefs = { ...h.context.notificationPrefs, savedCalendarFeedUrl: 'https://calendar.example/secret.ics', autoSyncCalendar: true };
+h.render();
+assert.equal(h.byId('canvas-calendar-url'), undefined, 'Settings cannot edit a removed integration');
+assert.ok(!h.text().includes('secret.ics'), 'Legacy feed secrets are absent from rendered settings');
 h.setResponse({ ok: true, headers: { get: () => 'text/html' }, json: () => { throw new Error('Must not parse SPA HTML'); } });
 await h.byId('generate-calendar-token-btn').props.onClick(); h.render();
 assert.equal(h.requests[0][1].method, 'POST'); assert.equal(h.requests[0][1].headers.Authorization, 'Bearer test-account');
@@ -106,7 +104,7 @@ for (const state of ['denied', 'unsupported'] as const) {
 }
 const denied = harness(); const grant = denied.nodes().find(n => n.type === 'button' && n.props.children === 'Grant browser access');
 await grant.props.onClick(); denied.render(); assert.ok(denied.text().includes('Blocked in browser settings'));
-console.log('Settings interactions, URL masking, permission feedback and calendar response checks passed.');
+console.log('Settings interactions, retired feed controls, permission feedback and calendar response checks passed.');
 
 const backup = harness();
 backup.byId('tab-backup-btn').props.onClick(); backup.render();

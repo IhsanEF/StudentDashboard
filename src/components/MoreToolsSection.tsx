@@ -117,16 +117,6 @@ export default function MoreToolsSection({ onNavigate }: MoreToolsSectionProps) 
     }
   };
 
-  // Helper to open Grades GPA converter
-  const navigateToGradesGpa = () => {
-    navigateToTab('Grades');
-    setTimeout(() => {
-      const allButtons = Array.from(document.querySelectorAll('button'));
-      const gpaBtn = allButtons.find((b) => b.textContent?.includes('UBC GPA Converter'));
-      if (gpaBtn) gpaBtn.click();
-    }, 60);
-  };
-
   // Helper to open Grades Final Exam target
   const navigateToFinalExamTarget = () => {
     navigateToTab('Grades');
@@ -243,7 +233,7 @@ export default function MoreToolsSection({ onNavigate }: MoreToolsSectionProps) 
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-slate-900 leading-tight">Timetable and exam clashes</p>
             <p className="text-xs text-slate-500 leading-tight truncate mt-0.5">
-              Your classes and the UBC exam-hardship check.
+              Your classes, exams, and schedule conflicts.
             </p>
           </div>
           <ChevronRight size={14} className="text-slate-400 shrink-0 ml-auto" />
@@ -260,22 +250,6 @@ export default function MoreToolsSection({ onNavigate }: MoreToolsSectionProps) 
             <p className="text-xs font-bold text-slate-900 leading-tight">What do I need on the final?</p>
             <p className="text-xs text-slate-500 leading-tight truncate mt-0.5">
               Target grade for each course, plus try-out scores.
-            </p>
-          </div>
-          <ChevronRight size={14} className="text-slate-400 shrink-0 ml-auto" />
-        </button>
-
-        {/* 5. UBC GPA converter */}
-        <button
-          type="button"
-          onClick={navigateToGradesGpa}
-          className="flex items-center gap-3 p-3 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-left transition-colors cursor-pointer min-h-[44px]"
-        >
-          <GraduationCap size={16} className="text-slate-600 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-900 leading-tight">UBC GPA converter</p>
-            <p className="text-xs text-slate-500 leading-tight truncate mt-0.5">
-              Turn a percentage into a UBC letter grade and GPA.
             </p>
           </div>
           <ChevronRight size={14} className="text-slate-400 shrink-0 ml-auto" />
@@ -326,7 +300,7 @@ export default function MoreToolsSection({ onNavigate }: MoreToolsSectionProps) 
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-slate-900 leading-tight">Course notices</p>
               <p className="text-xs text-slate-500 leading-tight truncate mt-0.5">
-                Announcements from imported Canvas emails.
+                Announcements from imported course detailss.
               </p>
             </div>
             <ChevronRight size={14} className="text-slate-400 shrink-0 ml-auto" />

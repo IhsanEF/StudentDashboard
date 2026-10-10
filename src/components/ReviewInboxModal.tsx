@@ -4,24 +4,23 @@ import { auth } from '../auth';
 import { useTasksContext } from '../hooks/useTasks';
 import { Task, CalendarDateDiff } from '../types';
 import { useModalFocus } from '../hooks/useModalFocus';
-import { 
-  Inbox, 
-  X, 
-  Check, 
-  CheckCircle2, 
-  Calendar, 
-  Clock, 
-  AlertCircle, 
-  Sparkles, 
-  ArrowRight, 
-  Trash2, 
+import {
+  Inbox,
+  X,
+  Check,
+  CheckCircle2,
+  Calendar,
+  Clock,
+  AlertCircle,
+  Sparkles,
+  ArrowRight,
+  Trash2,
   RefreshCw,
   Edit3,
   ShieldCheck,
   CalendarCheck2
 } from 'lucide-react';
 import { formatReadableDate, getCourseColor, canvasLinkReviewWarning } from '../utils';
-import { fetchAndSyncCanvasFeed } from '../services/calendarSyncService';
 
 /**
  * Helper to identify pure recurring lectures, tutorials, or non-gradable class meetings
@@ -62,16 +61,16 @@ interface ReviewInboxModalProps {
 }
 
 export default function ReviewInboxModal({ isOpen, onClose, onEditTask }: ReviewInboxModalProps) {
-  const { 
-    tasks, 
+  const {
+    tasks,
     isDemoMode,
-    updateTask, 
-    deleteTask, 
+    updateTask,
+    deleteTask,
     dismissReviewTasks,
-    batchAddTasks, 
-    notificationPrefs, 
+    batchAddTasks,
+    notificationPrefs,
     updateNotificationPrefs,
-    refreshTasks 
+    refreshTasks
   } = useTasksContext();
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -316,81 +315,7 @@ export default function ReviewInboxModal({ isOpen, onClose, onEditTask }: Review
   };
 
   // Trigger manual background sync with saved feed URL
-  const handleTriggerSyncNow = async () => {
-    setSyncStatusMsg(null);
-    setActionError(null);
-    if (isDemoMode || !auth.currentUser) {
-      setActionError('Sign in with Google to sync your Canvas feed.');
-      return;
-    }
-    const feedUrl = notificationPrefs?.savedCalendarFeedUrl;
-    if (!feedUrl) {
-      setActionError("You haven't imported a Canvas calendar yet. Open Import from Canvas calendar to add your link.");
-      return;
-    }
 
-    setIsSyncing(true);
-    setSyncStatusMsg(null);
-    setActionError(null);
-    try {
-      const token = await auth.currentUser.getIdToken();
-      const currentDismissed = new Set(notificationPrefs?.dismissedCanvasIds || []);
-      const { diffResult } = await fetchAndSyncCanvasFeed(feedUrl, tasks, token, Array.from(currentDismissed));
-      
-      // Separate actual tasks from recurring lecture/class meetings (V3-374)
-      const genuineNewTasks: Task[] = [];
-      const lectureIdsToTombstone: string[] = [];
-
-      for (const nt of diffResult.newTasks) {
-        if (isCanvasClassOrLecture(nt)) {
-          lectureIdsToTombstone.push(nt.task_id);
-        } else {
-          genuineNewTasks.push(nt);
-        }
-      }
-
-      // Tombstone lecture/meeting IDs so they are never re-fetched or re-imported on future syncs (V3-153)
-      if (lectureIdsToTombstone.length > 0) {
-        lectureIdsToTombstone.forEach(id => currentDismissed.add(id));
-        await updateNotificationPrefs({
-          ...notificationPrefs,
-          dismissedCanvasIds: Array.from(currentDismissed)
-        });
-      }
-
-      // Batch add only genuine tasks
-      if (genuineNewTasks.length > 0) {
-        await batchAddTasks(genuineNewTasks);
-      }
-
-      // Update tasks with date changes
-      for (const dc of diffResult.dateChangedTasks) {
-        await updateTask(dc.existingTask.task_id, {
-          canvas_date_diff: dc.diff
-        });
-      }
-
-      const nowIso = new Date().toISOString();
-      await updateNotificationPrefs({
-        ...notificationPrefs,
-        dismissedCanvasIds: Array.from(currentDismissed),
-        lastCalendarSync: nowIso
-      });
-
-      const lectureNote = lectureIdsToTombstone.length > 0 ? ` (${lectureIdsToTombstone.length} class meetings filtered out)` : '';
-      setSyncStatusMsg(
-        `Sync complete: ${genuineNewTasks.length} new items${lectureNote}, ${diffResult.dateChangedTasks.length} date changes, ${diffResult.unchangedCount} unchanged.`
-      );
-    } catch (err: any) {
-      const needsSignIn = err?.status === 401 || /401|unauthorized|expired.*token|auth\//i.test(err?.message || err?.code || '');
-      setActionError(needsSignIn
-        ? 'Your session has expired. Sign in with Google again to sync your Canvas feed.'
-        : 'Unable to sync your Canvas feed. Please try again.');
-    } finally {
-      setIsSyncing(false);
-      setTimeout(() => setSyncStatusMsg(null), 5000);
-    }
-  };
 
   return (
     <div
@@ -426,17 +351,7 @@ export default function ReviewInboxModal({ isOpen, onClose, onEditTask }: Review
           </div>
 
           <div className="flex items-center gap-2">
-            {(notificationPrefs?.savedCalendarFeedUrl || isDemoMode) && (
-              <button
-                onClick={handleTriggerSyncNow}
-                disabled={isSyncing || isDemoMode || !auth.currentUser}
-                aria-describedby={isDemoMode || !auth.currentUser ? 'review-sync-sign-in-hint' : undefined}
-                className="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
-                <span>{isSyncing ? 'Checking Canvas...' : 'Check Canvas now'}</span>
-              </button>
-            )}
+
             <button
               onClick={onClose}
               aria-label="Close imported items review"
@@ -447,9 +362,7 @@ export default function ReviewInboxModal({ isOpen, onClose, onEditTask }: Review
           </div>
         </div>
 
-        {(isDemoMode || !auth.currentUser) && (
-          <p id="review-sync-sign-in-hint" className="px-5 py-2 text-xs text-slate-600">Sign in with Google to sync your Canvas feed.</p>
-        )}
+
 
         {/* Status Message */}
         {syncStatusMsg && (
@@ -487,10 +400,10 @@ export default function ReviewInboxModal({ isOpen, onClose, onEditTask }: Review
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                       <AlertCircle size={14} className="text-amber-500" />
-                      <span>Canvas Date Modifications ({tasksWithDateDiffs.length})</span>
+                      <span>Imported date updates ({tasksWithDateDiffs.length})</span>
                     </h3>
                     <span className="text-[11px] text-slate-500">
-                      Canvas calendar updated these deadlines
+                      An imported document updated these deadlines
                     </span>
                   </div>
 
@@ -519,14 +432,14 @@ export default function ReviewInboxModal({ isOpen, onClose, onEditTask }: Review
                                 </p>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-1.5 shrink-0">
                               <button
                                 onClick={() => handleApplyCanvasDate(task)}
                                 className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                               >
                                 <Check size={13} />
-                                <span>Use Canvas date</span>
+                                <span>Use imported date</span>
                               </button>
                               <button
                                 onClick={() => handleKeepStudentDate(task)}
@@ -545,7 +458,7 @@ export default function ReviewInboxModal({ isOpen, onClose, onEditTask }: Review
                             <ArrowRight size={14} className="text-amber-600" />
                             <span className="font-bold text-blue-700 flex items-center gap-1">
                               <CalendarCheck2 size={13} />
-                              New Canvas Deadline: {formatReadableDate(diff.newDueDate)}
+                              New imported deadline: {formatReadableDate(diff.newDueDate)}
                             </span>
                           </div>
                         </div>

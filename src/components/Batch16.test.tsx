@@ -97,7 +97,7 @@ const button = (tree: any, label: string) => find(tree, n => n.type === 'button'
 const form = (tree: any) => find(tree, n => n.type === 'form');
 const change = (node: any, value: string) => node.props.onChange({ target: { value } });
 const event = { preventDefault: () => {} };
-const open = { isOpen: true, onClose: () => {} };
+const open = { isOpen: true, onClose: () => {}, defaultTab: 'email' };
 
 const groups = await harness('GroupsTab');
 groups.environment.context.courses = [INITIAL_SAMPLE_COURSES[1], INITIAL_SAMPLE_COURSES[0]];
@@ -153,7 +153,7 @@ const demo = await harness('SmartImportModal', true);
 tree = demo.render(open); tree = demo.render(open);
 assert.equal(button(tree, 'Extract Coursework').props.disabled, true);
 assert.equal(button(tree, 'Sample Assignment'), undefined);
-assert.match(JSON.stringify(tree), /Demo mode can't extract from pasted emails, files or calendar links/);
+assert.match(JSON.stringify(tree), /Demo mode can't extract from course text, files, or screenshots/);
 await button(tree, 'Extract Coursework').props.onClick(); assert.equal(demo.requests.length, 0);
 
 const smart = await harness('SmartImportModal');
@@ -214,15 +214,12 @@ for (const includeTask of [true, false]) {
   assert.match(JSON.stringify(local.render(open)), new RegExp(`imported ${includeTask ? 1 : 0} tasks? and 1 course into demo workspace`));
 }
 
-const calendar = await harness('SmartImportModal');
-calendar.response({ tasks: [{ ...imported, canvas_url: 'mailto:prof@ubc.ca' }], courses: [] });
-tree = calendar.render({ ...open, defaultTab: 'calendar' }); tree = calendar.render({ ...open, defaultTab: 'calendar' });
-change(input(tree, 'calendar-feed-url-input'), 'BEGIN:VCALENDAR\nEND:VCALENDAR');
-await button(calendar.render({ ...open, defaultTab: 'calendar' }), 'Extract Coursework').props.onClick();
-assert.deepEqual(calendar.requests[0].body, { icsData: 'BEGIN:VCALENDAR\nEND:VCALENDAR' });
-assert.equal(calendar.requests[0].url, '/api/parse/ics'); assert.equal(calendar.requests[0].headers.Authorization, 'Bearer test-token');
-tree = calendar.render(open); assert.ok(find(tree, n => n.props?.role === 'note' && JSON.stringify(n.props.children).includes('will be removed')));
-await button(tree, 'Tasks &').props.onClick(); assert.equal(calendar.imports[0][1][0].canvas_url, '');
+const retiredCalendar = await harness('SmartImportModal');
+tree = retiredCalendar.render({ ...open, defaultTab: 'calendar' });
+tree = retiredCalendar.render({ ...open, defaultTab: 'calendar' });
+assert.equal(input(tree, 'calendar-feed-url-input'), undefined);
+assert.ok(find(tree, n => n.type === 'input' && n.props.type === 'file'));
+assert.equal(retiredCalendar.requests.length, 0, 'Legacy calendar entry only offers document upload');
 
 const image = await harness('SmartImportModal');
 image.response({ tasks: [imported], courses: [] });

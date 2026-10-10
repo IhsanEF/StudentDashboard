@@ -206,7 +206,7 @@ async function providerHarness(initialDemoMode: boolean, uid = 'real-user') {
   });
   const props = { children: null, initialDemoMode, user: { uid }, onDemoSignIn: (u: any) => { props.user = u; }, onLogout: () => { exited++; } };
   const render = () => h.render(() => { lastTree = module.exports.TaskProvider(props); return lastTree; });
-  return { auth, reports, render, store, intervals, timeouts, services, confirmations,
+  return { auth, reports, render, store, intervals, timeouts, services, confirmations, listeners,
     tree: () => lastTree, subscriptions: () => subscriptions, confirm: (value: boolean) => { confirmResult = value; },
     error: (err: any) => taskError!(err),
     emitCollection: (name: string, items: any[], metadata: any) => collectionListeners.get(name)!.success(items, metadata),
@@ -644,7 +644,7 @@ await assert.rejects(() => courseReal.render().updateCourse({ ...shell, credits:
 assert.equal(courseReal.render().courses.find((c: any) => c.course_code === 'TEST 101').credits, 4, 'Failed persistence does not change React state');
 console.log('Batch 17 shared demo course memory, stable shell IDs, credits and persistence guards passed.');
 
-// Background sync failures must reach production telemetry even when caught locally.
+// Saved legacy feed preferences cannot reactivate a removed integration.
 const telemetrySync = await providerHarness(false);
 telemetrySync.services.fetchUserNotificationPrefs = async () => ({ ...DEFAULT_NOTIFICATION_PREFS,
   savedCalendarFeedUrl: 'https://canvas.ubc.ca/feeds/calendars/user_test.ics', autoSyncCalendar: true });
@@ -652,5 +652,6 @@ telemetrySync.services.fetchUserNotificationPrefs = async () => ({ ...DEFAULT_NO
 telemetrySync.render(); await new Promise(resolve => setImmediate(resolve)); telemetrySync.render();
 telemetrySync.emitTasks(tasks); telemetrySync.render();
 telemetrySync.manualCanvasSync(); await new Promise(resolve => setImmediate(resolve));
-assert.ok(telemetrySync.reports.some(report => report.source === 'TaskProvider.canvas.backgroundSync'));
-console.log('Caught background Canvas sync emits source-tagged telemetry.');
+assert.equal(telemetrySync.reports.some(report => report.source === 'TaskProvider.canvas.backgroundSync'), false, 'Legacy saved feeds must not trigger background syncing');
+assert.equal(telemetrySync.listeners.has('ubc:sync-canvas-feed'), false);
+console.log('Legacy saved feeds do not trigger background integration requests.');

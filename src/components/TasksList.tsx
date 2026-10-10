@@ -21,7 +21,7 @@ export default function TasksList({ initialGroup }: TasksListProps = {}) {
   const courses = ['All', ...Array.from(new Set(activeTasks.map(t => t.course)))].filter(Boolean);
 
   const filteredTasks = activeTasks.filter(t => {
-    const matchesSearch = (t.title || '').toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch = (t.title || '').toLowerCase().includes(search.toLowerCase()) ||
                           (t.course || '').toLowerCase().includes(search.toLowerCase());
     const matchesCourse = filterCourse === 'All' || t.course === filterCourse;
     return matchesSearch && matchesCourse;
@@ -94,8 +94,8 @@ export default function TasksList({ initialGroup }: TasksListProps = {}) {
     <div className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
         <h2 className="font-bold text-slate-900">Bring in your coursework</h2>
-        <p className="text-sm text-slate-600 mt-1">Canvas won't let other apps sign in for you — so paste a Canvas email, upload a syllabus, or snap a screenshot and we'll pull the deadlines out.</p>
-        <button type="button" onClick={() => openImport('calendar')} className="mt-3 text-sm font-semibold text-blue-700 hover:underline cursor-pointer">Import coursework</button>
+        <p className="text-sm text-slate-600 mt-1">Add tasks manually, paste course details, upload a course outline, or share a screenshot to bring in your deadlines.</p>
+        <button type="button" onClick={() => openImport('file')} className="mt-3 text-sm font-semibold text-blue-700 hover:underline cursor-pointer">Import coursework</button>
       </div>
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
@@ -110,7 +110,7 @@ export default function TasksList({ initialGroup }: TasksListProps = {}) {
             className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
-        
+
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-2 flex-1 sm:flex-initial min-w-[130px]">
             <Filter size={18} className="text-slate-500 shrink-0" />
@@ -125,7 +125,7 @@ export default function TasksList({ initialGroup }: TasksListProps = {}) {
               ))}
             </select>
           </div>
-          
+
           <button
             type="button"
             onClick={() => setFocusModeActive(true)}
@@ -222,7 +222,7 @@ export default function TasksList({ initialGroup }: TasksListProps = {}) {
           <div className="text-center py-20 text-slate-500 bg-white rounded-2xl border border-dashed border-slate-300 p-6 flex flex-col items-center justify-center gap-3">
             <p>
               {tasks.length === 0
-                ? 'Nothing here yet. Paste your Canvas calendar link (Smart Import) to bring in every due date, or add a task by hand.'
+                ? 'Nothing here yet. Add a task by hand or upload a course outline to bring in your deadlines.'
                 : 'No tasks match your filters.'}
             </p>
             <div className="flex items-center gap-2">
@@ -235,10 +235,10 @@ export default function TasksList({ initialGroup }: TasksListProps = {}) {
               </button>
               <button
                 type="button"
-                onClick={() => openImport('calendar')}
+                onClick={() => openImport('file')}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold cursor-pointer border border-slate-200"
               >
-                Import from Canvas calendar
+                Upload a course outline calendar
               </button>
             </div>
           </div>

@@ -3,21 +3,21 @@ import { useTasksContext } from '../hooks/useTasks';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { ClassScheduleItem, ExamItem, ExamClash } from '../types';
 import { getAuthHeader } from '../auth';
-import { 
-  Calendar as CalendarIcon, 
-  Clock, 
-  MapPin, 
-  User, 
-  Plus, 
-  Trash2, 
-  Edit2, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Sparkles, 
-  Upload, 
-  FileText, 
-  X, 
-  Layers, 
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  User,
+  Plus,
+  Trash2,
+  Edit2,
+  AlertTriangle,
+  CheckCircle2,
+  Sparkles,
+  Upload,
+  FileText,
+  X,
+  Layers,
   ChevronRight,
   Info,
   ExternalLink
@@ -256,14 +256,14 @@ function setStoredDeletedExamIds(ids: Set<string>) {
 }
 
 export default function TimetableTab() {
-  const { 
-    classes, 
-    exams, 
-    addClassItem, 
-    updateClassItem, 
-    deleteClassItem, 
-    addExamItem, 
-    updateExamItem, 
+  const {
+    classes,
+    exams,
+    addClassItem,
+    updateClassItem,
+    deleteClassItem,
+    addExamItem,
+    updateExamItem,
     deleteExamItem,
     isDemoMode,
     showToast
@@ -600,37 +600,6 @@ export default function TimetableTab() {
       }
     }
 
-    // 3. UBC Exam Hardship Check: 3 exams within 24 hours
-    for (let i = 0; i < sorted.length - 2; i++) {
-      const first = sorted[i];
-      const third = sorted[i + 2];
-
-      const firstStartMins = timeToMinutes(first.start_time);
-      const thirdEndMins = timeToMinutes(third.end_time) ?? (timeToMinutes(third.start_time) !== null ? (timeToMinutes(third.start_time)! + 150) : null);
-
-      if (firstStartMins === null || thirdEndMins === null) continue;
-      const firstEndMins = timeToMinutes(first.end_time) ?? (firstStartMins + 150);
-      const thirdStartMins = timeToMinutes(third.start_time);
-      if (firstEndMins <= firstStartMins || (thirdStartMins !== null && thirdEndMins <= thirdStartMins)) continue;
-
-      const firstStartTime = new Date(`${first.date}T00:00:00`).getTime() + firstStartMins * 60000;
-      const thirdEndTime = new Date(`${third.date}T00:00:00`).getTime() + thirdEndMins * 60000;
-      const timeDiffHours = (thirdEndTime - firstStartTime) / (1000 * 3600);
-
-      if (timeDiffHours <= 24 && timeDiffHours >= 0) {
-        // UBC policy advice reference: UBC may allow rescheduling in this situation — check the exam hardship page and contact Enrolment Services to find out if you qualify.
-        const examTitles = sorted.slice(i, i + 3).map(ex => `${ex.course_code}: ${ex.title || 'Exam'} (${formatVancouverDate(ex.date)} ${ex.start_time})`).join(', ');
-        const text = `Three exams inside 24 hours (${examTitles}). UBC may allow rescheduling in this situation — check with Enrolment Services to see whether you qualify and by when.`;
-        clashes.push({
-          type: 'hardship',
-          exam1: first,
-          exam2: third,
-          message: text,
-          description: text
-        });
-      }
-    }
-
     return clashes;
   }, [effectiveExams]);
 
@@ -850,7 +819,7 @@ export default function TimetableTab() {
             <h2 className="text-xl font-bold text-[#002145]">Your week</h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Visualize recurring lecture blocks, tutorial labs, and check final exam conflicts against UBC guidelines.
+            Plan classes and study sessions, and check for overlapping exams.
           </p>
         </div>
 
@@ -862,8 +831,8 @@ export default function TimetableTab() {
               onClick={() => setActiveSubTab('grid')}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                activeSubTab === 'grid' 
-                  ? "bg-white text-blue-900 shadow-xs" 
+                activeSubTab === 'grid'
+                  ? "bg-white text-blue-900 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               )}
             >
@@ -873,8 +842,8 @@ export default function TimetableTab() {
               onClick={() => setActiveSubTab('classes')}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
-                activeSubTab === 'classes' 
-                  ? "bg-white text-blue-900 shadow-xs" 
+                activeSubTab === 'classes'
+                  ? "bg-white text-blue-900 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               )}
             >
@@ -885,8 +854,8 @@ export default function TimetableTab() {
               onClick={() => setActiveSubTab('exams')}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
-                activeSubTab === 'exams' 
-                  ? "bg-white text-blue-900 shadow-xs" 
+                activeSubTab === 'exams'
+                  ? "bg-white text-blue-900 shadow-xs"
                   : "text-slate-600 hover:text-slate-900"
               )}
             >
@@ -944,7 +913,7 @@ export default function TimetableTab() {
         </div>
       </div>
 
-      {/* UBC Exam Hardship Alert Banner (if clashes detected) */}
+      {/* Exam schedule conflict banner (if clashes detected) */}
       {duplicateExamWarnings.length > 0 && (
         <div role="status" className="bg-amber-50 border border-amber-300 rounded-2xl p-4 text-xs text-amber-900 space-y-1">
           {duplicateExamWarnings.map(warning => <p key={warning}>{warning}</p>)}
@@ -965,18 +934,6 @@ export default function TimetableTab() {
                 <span>{c.description}</span>
               </div>
             ))}
-          </div>
-          <div className="pt-2 pl-6 flex items-center gap-4 text-[11px] text-amber-900 font-medium">
-            <span>UBC may allow rescheduling in this situation — check with Enrolment Services to see whether you qualify and by when.</span>
-            <a 
-              href="https://students.ubc.ca/enrolment/exams/exam-issues" 
-              target="_blank" 
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-blue-700 hover:underline font-bold"
-            >
-              <span>UBC Exam Hardship Guidelines</span>
-              <ExternalLink size={12} />
-            </a>
           </div>
         </div>
       )}
@@ -1033,9 +990,9 @@ export default function TimetableTab() {
               <span className="text-xs font-bold text-slate-800">Class times (Vancouver time)</span>
             </div>
             <label className="flex items-center gap-2 p-2 text-xs text-slate-600 cursor-pointer select-none">
-              <input 
-                type="checkbox" 
-                checked={includeWeekends} 
+              <input
+                type="checkbox"
+                checked={includeWeekends}
                 onChange={(e) => setIncludeWeekends(e.target.checked)}
                 className="h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
@@ -1054,7 +1011,7 @@ export default function TimetableTab() {
           <div ref={gridScrollRef} role="region" aria-label="Weekly timetable" aria-describedby="timetable-scroll-hint" tabIndex={0} className="overflow-x-auto">
             <div className={includeWeekends ? "min-w-[980px]" : "min-w-[760px]"}>
               {/* Day Header Row */}
-              <div 
+              <div
                 className="grid border-b border-slate-200 bg-slate-100/70 text-center text-xs font-bold text-slate-700"
                 style={{ gridTemplateColumns: `64px repeat(${daysToRender.length}, minmax(0, 1fr))` }}
               >
@@ -1067,9 +1024,9 @@ export default function TimetableTab() {
               </div>
 
               {/* Time Slots and Schedule Grid */}
-              <div 
-                className="relative grid" 
-                style={{ 
+              <div
+                className="relative grid"
+                style={{
                   gridTemplateColumns: `64px repeat(${daysToRender.length}, minmax(0, 1fr))`,
                   gridTemplateRows: `${gridHeight}px`,
                   height: `${gridHeight}px`,
@@ -1077,7 +1034,7 @@ export default function TimetableTab() {
                 }}
               >
                 {/* Time Axis Column */}
-                <div 
+                <div
                   className="relative border-r border-slate-200 bg-slate-50/50 text-[11px] font-medium text-slate-400 select-none box-border"
                   style={{ height: `${gridHeight}px` }}
                 >
@@ -1101,8 +1058,8 @@ export default function TimetableTab() {
                   const dayClasses = effectiveClasses.filter(c => c.day === day);
                   const layoutMap = computeDayClassLayout(dayClasses);
                   return (
-                    <div 
-                      key={day} 
+                    <div
+                      key={day}
                       className="relative border-r border-slate-200 last:border-r-0"
                       style={{ height: `${gridHeight}px` }}
                     >
@@ -1141,10 +1098,10 @@ export default function TimetableTab() {
                             }}
                             className="absolute text-left focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 border rounded-lg p-1.5 shadow-xs overflow-hidden cursor-pointer hover:shadow-md transition-all z-10 flex flex-col justify-between group"
                             title={
-                              isInvalidTime 
-                                ? `Invalid time format: "${item.start_time} - ${item.end_time}". Click to edit.` 
-                                : isOverlapping 
-                                  ? `Class time conflict: overlaps with another class on ${day}` 
+                              isInvalidTime
+                                ? `Invalid time format: "${item.start_time} - ${item.end_time}". Click to edit.`
+                                : isOverlapping
+                                  ? `Class time conflict: overlaps with another class on ${day}`
                                   : undefined
                             }
                           >
@@ -1202,8 +1159,8 @@ export default function TimetableTab() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {effectiveClasses.map((c) => (
-              <div 
-                key={c.id} 
+              <div
+                key={c.id}
                 className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
@@ -1302,7 +1259,7 @@ export default function TimetableTab() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {effectiveExams.map((ex) => (
-              <div 
+              <div
                 key={ex.id}
                 className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
@@ -1445,7 +1402,7 @@ export default function TimetableTab() {
                   <p className="text-xs text-blue-200">Paste Workday schedule text, course syllabus, or upload a timetable screenshot</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsImportModalOpen(false)}
                 className="text-white/70 hover:text-white min-h-8 min-w-8 p-1 rounded-lg transition-colors cursor-pointer"
                 aria-label="Close import dialog"
@@ -1688,8 +1645,8 @@ function ClassEditModal({
       <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="timetable-class-title" className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md max-h-[90dvh] overflow-y-auto">
         <div className="bg-[#002145] text-white px-5 py-3.5 flex items-center justify-between">
           <h3 id="timetable-class-title" className="font-bold text-sm">{initialData ? 'Edit Class Schedule' : 'Add Class Block'}</h3>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-white/70 hover:text-white min-h-8 min-w-8 p-1 rounded-lg transition-colors cursor-pointer"
             aria-label="Close class modal"
             title="Close class modal"
@@ -1701,19 +1658,19 @@ function ClassEditModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Course Code</label>
-              <input 
-                type="text" 
-                required 
-                value={courseCode} 
+              <input
+                type="text"
+                required
+                value={courseCode}
                 onChange={(e) => setCourseCode(e.target.value.toUpperCase())}
                 placeholder="e.g. CPSC 310"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-bold text-blue-900 dark:text-blue-400" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-bold text-blue-900 dark:text-blue-400"
               />
             </div>
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Type</label>
-              <select 
-                value={type} 
+              <select
+                value={type}
                 onChange={(e) => setType(e.target.value as any)}
                 className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100"
               >
@@ -1729,20 +1686,20 @@ function ClassEditModal({
 
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Course Name</label>
-            <input 
-              type="text" 
-              value={courseName} 
+            <input
+              type="text"
+              value={courseName}
               onChange={(e) => setCourseName(e.target.value)}
               placeholder="e.g. Intro to Software Engineering"
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400" 
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Day</label>
-              <select 
-                value={day} 
+              <select
+                value={day}
                 onChange={(e) => setDay(e.target.value as any)}
                 className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100"
               >
@@ -1751,15 +1708,15 @@ function ClassEditModal({
             </div>
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Start Time</label>
-              <input 
-                type="time" 
-                required 
-                value={startTime} 
+              <input
+                type="time"
+                required
+                value={startTime}
                 onChange={(e) => {
                   setStartTime(e.target.value);
                   setShowClashConfirm(false);
                 }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100"
               />
             </div>
             <div>
@@ -1769,10 +1726,10 @@ function ClassEditModal({
                   <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">Must be after start</span>
                 )}
               </div>
-              <input 
-                type="time" 
-                required 
-                value={endTime} 
+              <input
+                type="time"
+                required
+                value={endTime}
                 onChange={(e) => {
                   setEndTime(e.target.value);
                   setShowClashConfirm(false);
@@ -1780,7 +1737,7 @@ function ClassEditModal({
                 className={cn(
                   "w-full bg-slate-50 dark:bg-slate-800 border rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100",
                   isEndTimeNotAfterStart ? "border-rose-500 ring-1 ring-rose-500" : "border-slate-300 dark:border-slate-700"
-                )} 
+                )}
               />
             </div>
           </div>
@@ -1801,22 +1758,22 @@ function ClassEditModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Location / Room</label>
-              <input 
-                type="text" 
-                value={location} 
+              <input
+                type="text"
+                value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. DMP 301 (optional)"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400"
               />
             </div>
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Instructor</label>
-              <input 
-                type="text" 
-                value={instructor} 
+              <input
+                type="text"
+                value={instructor}
                 onChange={(e) => setInstructor(e.target.value)}
                 placeholder="e.g. Dr. Holmes (optional)"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400"
               />
             </div>
           </div>
@@ -1918,15 +1875,15 @@ function ClassEditModal({
                 </button>
               ) : <div />}
               <div className="flex items-center gap-2">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={onClose}
                   className="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isTimeFormatInvalid || isEndTimeNotAfterStart}
                   className={cn(
                     "bg-[#002145] hover:bg-blue-900 text-white font-bold px-4 py-1.5 rounded-lg shadow-xs cursor-pointer transition-all",
@@ -2004,8 +1961,8 @@ function ExamEditModal({
 
   const doSave = () => {
     const trimmedLoc = location.trim();
-    const parsedWeight = weight !== '' && !isNaN(Number(weight)) 
-      ? Math.max(0, Math.min(100, Math.round(Number(weight)))) 
+    const parsedWeight = weight !== '' && !isNaN(Number(weight))
+      ? Math.max(0, Math.min(100, Math.round(Number(weight))))
       : undefined;
     onSave({
       id: initialData?.id || `exam-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -2037,8 +1994,8 @@ function ExamEditModal({
       <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="timetable-exam-title" className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md max-h-[90dvh] overflow-y-auto">
         <div className="bg-[#002145] text-white px-5 py-3.5 flex items-center justify-between">
           <h3 id="timetable-exam-title" className="font-bold text-sm">{initialData ? 'Edit Final Exam' : 'Add Final Exam'}</h3>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-white/70 hover:text-white min-h-8 min-w-8 p-1 rounded-lg transition-colors cursor-pointer"
             aria-label="Close exam modal"
             title="Close exam modal"
@@ -2050,63 +2007,63 @@ function ExamEditModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Course Code</label>
-              <input 
-                type="text" 
-                required 
-                value={courseCode} 
+              <input
+                type="text"
+                required
+                value={courseCode}
                 onChange={(e) => setCourseCode(e.target.value.toUpperCase())}
                 placeholder="e.g. CPSC 310"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-bold text-blue-900 dark:text-blue-400" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-bold text-blue-900 dark:text-blue-400"
               />
             </div>
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Weight (%)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 min="0"
                 max="100"
-                value={weight} 
+                value={weight}
                 onChange={(e) => setWeight(e.target.value === '' ? '' : e.target.value)}
                 placeholder="e.g. 40 (optional)"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-bold text-slate-800 dark:text-slate-200" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-bold text-slate-800 dark:text-slate-200"
               />
             </div>
           </div>
 
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Exam Title</label>
-            <input 
-              type="text" 
-              required 
-              value={title} 
+            <input
+              type="text"
+              required
+              value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Final Examination"
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400" 
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Date</label>
-              <input 
-                type="date" 
-                required 
-                value={date} 
+              <input
+                type="date"
+                required
+                value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100"
               />
             </div>
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Start Time</label>
-              <input 
-                type="time" 
-                required 
-                value={startTime} 
+              <input
+                type="time"
+                required
+                value={startTime}
                 onChange={(e) => {
                   setStartTime(e.target.value);
                   setShowClashConfirm(false);
                 }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100"
               />
             </div>
             <div>
@@ -2116,10 +2073,10 @@ function ExamEditModal({
                   <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">Must be after start</span>
                 )}
               </div>
-              <input 
-                type="time" 
-                required 
-                value={endTime} 
+              <input
+                type="time"
+                required
+                value={endTime}
                 onChange={(e) => {
                   setEndTime(e.target.value);
                   setShowClashConfirm(false);
@@ -2127,7 +2084,7 @@ function ExamEditModal({
                 className={cn(
                   "w-full bg-slate-50 dark:bg-slate-800 border rounded-lg p-2 font-medium text-slate-900 dark:text-slate-100",
                   isEndTimeNotAfterStart ? "border-rose-500 ring-1 ring-rose-500" : "border-slate-300 dark:border-slate-700"
-                )} 
+                )}
               />
             </div>
           </div>
@@ -2148,22 +2105,22 @@ function ExamEditModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Location / Room</label>
-              <input 
-                type="text" 
-                value={location} 
+              <input
+                type="text"
+                value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. OSBO A, SRC Gym (optional)"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400"
               />
             </div>
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes / Aids Allowed</label>
-              <input 
-                type="text" 
-                value={notes} 
+              <input
+                type="text"
+                value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="e.g. 1 cheat sheet allowed (optional)"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 placeholder-slate-400"
               />
             </div>
           </div>
@@ -2247,15 +2204,15 @@ function ExamEditModal({
                 </button>
               ) : <div />}
               <div className="flex items-center gap-2">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={onClose}
                   className="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isTimeFormatInvalid || isEndTimeNotAfterStart}
                   className={cn(
                     "bg-[#002145] hover:bg-blue-900 text-white font-bold px-4 py-1.5 rounded-lg shadow-xs cursor-pointer transition-all",

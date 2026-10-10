@@ -255,15 +255,16 @@ export function getUrlHostname(url?: string | null): string {
   return safe ? new URL(safe).hostname : '';
 }
 
-export function isTrustedCanvasHost(host: string): boolean {
-  return host === 'canvas.ubc.ca' || host.endsWith('.ubc.ca') || host.endsWith('.instructure.com');
+export function isTrustedCanvasHost(_host: string): boolean {
+  // No institution or learning platform receives special trust.
+  return false;
 }
 
 export function canvasLinkReviewWarning(url?: string | null): string {
   if (!url?.trim()) return '';
   const host = getUrlHostname(url);
   if (!host) return 'This task link is not an HTTP(S) web link and will be removed on import.';
-  return isTrustedCanvasHost(host) ? '' : `External task link: ${host}. This is outside UBC and Canvas; check the destination before opening it.`;
+  return `External task link: ${host}. Check the destination before opening it.`;
 }
 
 /**
@@ -340,5 +341,5 @@ export function calculateGradePercentage(earnedStr?: string | number, possibleSt
  */
 export function normalizeCourseCode(code?: string): string {
   if (!code || typeof code !== 'string') return '';
-  return code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  return code.replace(/[^\p{L}\p{N}]/gu, '').toUpperCase();
 }

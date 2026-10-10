@@ -44,7 +44,7 @@ export interface Task {
   category_id?: string; // Optional manual override to tie into course grade categories
   category_name?: string; // e.g. "Assignments", "Midterm", "Labs", "Final Exam"
   source?: 'syllabus' | 'canvas' | 'email' | 'manual' | string;
-  is_syllabus_only?: boolean; // Flag syllabus-only deliverables ("Not on Canvas")
+  is_syllabus_only?: boolean; // Flag syllabus-only deliverables ("From course outline")
   is_past?: boolean; // Flag items whose due date is in the past (America/Vancouver)
   subtasks?: SubTask[]; // Sub-tasks with backward-planned start/do-by dates
   weight?: number; // Percentage of the course grade, independent of points_possible
@@ -220,7 +220,7 @@ export interface ExamItem {
   end_time: string;    // e.g. "18:00"
   location?: string;   // e.g. "SRC Gym A"
   weight_percent?: number; // e.g. 35
-  notes?: string;      // e.g. "Bring UBC Student Card, 1 page formula sheet allowed"
+  notes?: string;      // e.g. "Bring Student Card, 1 page formula sheet allowed"
 }
 
 export interface ExamClash {

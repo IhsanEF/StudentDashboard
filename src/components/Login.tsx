@@ -3,10 +3,10 @@ import { GraduationCap, AlertCircle, Loader2, Copy, Check, Info } from 'lucide-r
 import { googleSignIn, emailSignIn, emailSignUp, resetPassword } from '../auth';
 import PrivacyModal from './PrivacyModal';
 
-export default function Login({ 
+export default function Login({
   onLogin,
   onDemoLogin
-}: { 
+}: {
   onLogin: (user: any, verificationSent?: boolean) => void;
   onDemoLogin: () => void;
 }) {
@@ -152,9 +152,9 @@ export default function Login({
           <div className="bg-blue-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
             <GraduationCap size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">UBC Student Dashboard</h1>
-          <p className="mt-2 text-xs text-slate-600">Operated independently by this deployment's owner. Not affiliated with or endorsed by UBC.</p>
-          <p className="text-slate-600 mt-2 text-sm">Manage your coursework, assignments, and deadlines in one place.</p>
+          <h1 className="text-2xl font-bold text-slate-900">My LMS</h1>
+          <p className="mt-2 text-xs text-slate-600">Your courses, your pace, your plan.</p>
+          <p className="text-slate-600 mt-2 text-sm">Plan subjects, assignments, and study time at any education level.</p>
         </div>
 
         {isWebview && (
@@ -164,7 +164,7 @@ export default function Login({
               In-App Browser Detected
             </div>
             <p className="leading-relaxed">
-              Google blocks sign-in inside Canvas, Instagram, and chat app browsers. Open this page in Safari or Chrome to sign in with your Google account.
+              Google blocks sign-in inside social media and chat app browsers. Open this page in Safari or Chrome to sign in with your Google account.
             </p>
             <button
               type="button"
@@ -178,9 +178,9 @@ export default function Login({
         )}
 
         {error && (
-          <div 
-            role="alert" 
-            aria-live="assertive" 
+          <div
+            role="alert"
+            aria-live="assertive"
             className="bg-red-50 text-red-700 p-4 rounded-xl flex items-start gap-3 border border-red-100"
           >
             <AlertCircle className="shrink-0 mt-0.5" size={18} />
@@ -272,7 +272,7 @@ export default function Login({
         >
           See how it works with sample date
         </button>
-        
+
         <div className="text-center pt-1">
           <button
             type="button"

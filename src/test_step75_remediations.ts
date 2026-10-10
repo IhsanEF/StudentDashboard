@@ -7,24 +7,9 @@ console.log('🧪 Starting Step 75 Audit Remediation Verification (V3-430, V3-48
 // 1. Verify V3-430: Hardship text in src/components/TimetableTab.tsx
 const timetableFile = fs.readFileSync(path.join(process.cwd(), 'src/components/TimetableTab.tsx'), 'utf-8');
 
-console.log('--- Testing V3-430: UBC Exam Hardship Banner Text ---');
-assert(
-  !timetableFile.includes('You are eligible for hardship rescheduling'),
-  'FAIL: Flat eligibility verdict "You are eligible for hardship rescheduling" must be removed'
-);
-
-const expectedHardshipSnippet = 'Three exams inside 24 hours';
-const expectedHardshipAdvice = 'UBC may allow rescheduling in this situation — check the exam hardship page and contact Enrolment Services to find out if you qualify.';
-
-assert(
-  timetableFile.includes(expectedHardshipSnippet),
-  'FAIL: Hardship banner must contain "Three exams inside 24 hours"'
-);
-assert(
-  timetableFile.includes(expectedHardshipAdvice),
-  'FAIL: Hardship banner must contain "UBC may allow rescheduling in this situation — check the exam hardship page and contact Enrolment Services to find out if you qualify."'
-);
-console.log('✅ V3-430 UBC Exam Hardship banner wording verified!');
+assert(!timetableFile.includes('Three exams inside 24 hours'), 'Institution-specific hardship rule is removed');
+assert(!timetableFile.includes('UBC may allow rescheduling'), 'Institution-specific policy advice is removed');
+assert(!timetableFile.includes('students.ubc.ca'), 'Timetable does not link to a school policy');
 
 // 2. Verify V3-481: Inline two-step confirmation & undo toast for classes & exams
 console.log('--- Testing V3-481: Delete Confirmation & Undo Toast ---');

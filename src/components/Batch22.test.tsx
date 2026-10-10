@@ -182,7 +182,7 @@ for (const notification of [
   openBell();
 }
 assert.equal(inbox, 2);
-assert.match(readFileSync('src/TaskProvider.tsx', 'utf8'), /id: `canvas_sync_\$\{Date.now\(\)\}`,[\s\S]*?action: 'open_review_inbox'/);
+assert.doesNotMatch(readFileSync('src/TaskProvider.tsx', 'utf8'), /fetchAndSyncCanvasFeed/, 'Provider does not fetch retired feeds');
 console.log('Batch 22 notifications: empty Settings action, new/legacy inbox navigation, read state and existing touch/focus dismissal passed.');
 
 const pwa = await harness('PWAInstallButton', true); const pwaProps = { variant: 'compact' };

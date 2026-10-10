@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="ubcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#002145" />
-      <stop offset="100%" stop-color="#071b30" />
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#4338ca" />
     </linearGradient>
     <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FFD13B" />
@@ -10,25 +10,25 @@
     </linearGradient>
   </defs>
   <!-- Background with subtle corner radius -->
-  <rect width="512" height="512" rx="108" fill="url(#ubcGrad)" />
-  
+  <rect width="512" height="512" rx="108" fill="url(#brandGrad)" />
+
   <!-- Outer glowing accent ring -->
   <rect x="24" y="24" width="464" height="464" rx="88" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="4" />
 
   <!-- Calendar Base Card -->
   <rect x="96" y="128" width="320" height="272" rx="28" fill="#FFFFFF" />
-  
+
   <!-- Calendar Header Band -->
   <path d="M96 156 C96 140.536 108.536 128 124 128 L388 128 C403.464 128 416 140.536 416 156 L416 196 L96 196 Z" fill="url(#goldGrad)" />
-  
+
   <!-- Calendar Binder Rings -->
-  <rect x="160" y="104" width="24" height="48" rx="12" fill="#002145" stroke="#FFFFFF" stroke-width="4" />
-  <rect x="328" y="104" width="24" height="48" rx="12" fill="#002145" stroke="#FFFFFF" stroke-width="4" />
+  <rect x="160" y="104" width="24" height="48" rx="12" fill="#2563eb" stroke="#FFFFFF" stroke-width="4" />
+  <rect x="328" y="104" width="24" height="48" rx="12" fill="#2563eb" stroke="#FFFFFF" stroke-width="4" />
 
   <!-- Academic Crest / Checkmark Graphic inside Calendar -->
   <!-- Checkmark / Sparkle path -->
-  <path d="M168 296 L224 352 L344 232" fill="none" stroke="#002145" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
-  
+  <path d="M168 296 L224 352 L344 232" fill="none" stroke="#2563eb" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+
   <!-- Sparkle in top right corner -->
   <path d="M370 76 L376 96 L396 102 L376 108 L370 128 L364 108 L344 102 L364 96 Z" fill="#FFD13B" />
 </svg>

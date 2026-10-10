@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useId } from 'react';
 import { CourseGradeCalculationResult } from '../services/gradeCalculatorService';
 import { Target, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { getUbcLetterGrade } from '../utils';
 
 interface FinalExamCalculatorCardProps {
   courseResult: CourseGradeCalculationResult;
@@ -9,14 +8,14 @@ interface FinalExamCalculatorCardProps {
   finalExamWeight: number; // e.g. 35%
 }
 
-const UBC_TARGET_PRESETS = [
-  { label: 'A+ (90%)', value: 90 },
-  { label: 'A (85%)', value: 85 },
-  { label: 'A- (80%)', value: 80 },
-  { label: 'B+ (76%)', value: 76 },
-  { label: 'B (72%)', value: 72 },
-  { label: 'B- (68%)', value: 68 },
-  { label: 'Pass (50%)', value: 50 },
+const TARGET_PRESETS = [
+  { label: '90%', value: 90 },
+  { label: '85%', value: 85 },
+  { label: '80%', value: 80 },
+  { label: '76%', value: 76 },
+  { label: '72%', value: 72 },
+  { label: '68%', value: 68 },
+  { label: '50%', value: 50 },
 ];
 
 export default function FinalExamCalculatorCard({
@@ -113,11 +112,8 @@ export default function FinalExamCalculatorCard({
     isAchievable,
     isGuaranteed,
     bestCaseGrade,
-    worstCaseGrade,
-    targetLetter
+    worstCaseGrade
   } = useMemo(() => {
-    const letter = getUbcLetterGrade(targetPercentage);
-
     if (currentGrade === null || !Number.isFinite(currentGrade) || customWeight <= 0) {
       return {
         requiredScore: null,
@@ -125,8 +121,7 @@ export default function FinalExamCalculatorCard({
         isAchievable: true,
         isGuaranteed: false,
         bestCaseGrade: 0,
-        worstCaseGrade: 0,
-        targetLetter: letter
+        worstCaseGrade: 0
       };
     }
 
@@ -150,8 +145,7 @@ export default function FinalExamCalculatorCard({
       isAchievable: achievable,
       isGuaranteed: guaranteed,
       bestCaseGrade: bestCase,
-      worstCaseGrade: worstCase,
-      targetLetter: letter
+      worstCaseGrade: worstCase
     };
   }, [currentGrade, targetPercentage, customWeight, bankedPoints, assumedUngradedPoints, totalUngradedWeight]);
 
@@ -178,7 +172,6 @@ export default function FinalExamCalculatorCard({
   if (finalHasScore) {
     const projected = courseResult.projectedGrade ?? courseResult.currentGrade ?? 0;
     const projectedStr = projected.toFixed(1);
-    const projectedLetter = getUbcLetterGrade(projected);
     const finalScore = finalCategory?.categoryAverage !== null && finalCategory?.categoryAverage !== undefined
       ? finalCategory.categoryAverage.toFixed(1)
       : null;
@@ -204,7 +197,7 @@ export default function FinalExamCalculatorCard({
 
           <div className="text-right">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Course Grade</span>
-            <span className="text-sm font-black text-slate-800">{`${projectedStr}% (${projectedLetter})`}</span>
+            <span className="text-sm font-black text-slate-800">{`${projectedStr}%`}</span>
           </div>
         </div>
 
@@ -212,9 +205,6 @@ export default function FinalExamCalculatorCard({
           <div className="flex items-center justify-between">
             <span className="text-base font-bold">
               {`Final already graded - course grade ${projectedStr}%`}
-            </span>
-            <span className="text-xs font-bold text-indigo-800 bg-indigo-100 px-2.5 py-0.5 rounded-full">
-              {projectedLetter}
             </span>
           </div>
           <p className="text-xs text-indigo-900/80 mt-1.5">
@@ -250,7 +240,7 @@ export default function FinalExamCalculatorCard({
             <span className={`text-[11px] font-bold uppercase tracking-wider block ${isSandbox && !actualResult ? 'text-amber-600' : 'text-slate-400'}`}>
               {isSandbox && !actualResult ? 'Sandbox Base' : 'Current Base'}
             </span>
-            <span className="text-sm font-black text-slate-800">{currentBaseGrade.toFixed(1)}% ({getUbcLetterGrade(currentBaseGrade)})</span>
+            <span className="text-sm font-black text-slate-800">{currentBaseGrade.toFixed(1)}%</span>
           </div>
         )}
       </div>
@@ -267,8 +257,8 @@ export default function FinalExamCalculatorCard({
             onChange={e => setTargetPercentage(Number(e.target.value))}
             className="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 cursor-pointer outline-none focus:border-blue-500"
           >
-            {!UBC_TARGET_PRESETS.some(preset => preset.value === targetPercentage) && <option value={targetPercentage}>Custom ({targetPercentage}%)</option>}
-            {UBC_TARGET_PRESETS.map(preset => (
+            {!TARGET_PRESETS.some(preset => preset.value === targetPercentage) && <option value={targetPercentage}>Custom ({targetPercentage}%)</option>}
+            {TARGET_PRESETS.map(preset => (
               <option key={preset.value} value={preset.value}>
                 {preset.label}
               </option>
@@ -403,7 +393,7 @@ export default function FinalExamCalculatorCard({
                   </span>
                   {typeof requiredScore === 'number' && (
                     <span className="text-xs font-bold opacity-80">
-                      ({getUbcLetterGrade(requiredScore)})
+
                     </span>
                   )}
                 </div>
@@ -418,7 +408,7 @@ export default function FinalExamCalculatorCard({
                 : !isAchievable
                 ? `Targeting ${targetPercentage}% requires >100% on the final. Your maximum achievable course grade with 100% on the final is ${bestCaseGrade.toFixed(1)}%.`
                 : typeof requiredScore === 'number'
-                ? `Score at least ${requiredScore.toFixed(1)}% on the final exam to reach ${targetPercentage}% (${targetLetter}) overall.${assumptionSummary ? ` (assumes ${assumptionSummary})` : ''}`
+                ? `Score at least ${requiredScore.toFixed(1)}% on the final exam to reach ${targetPercentage}% overall.${assumptionSummary ? ` (assumes ${assumptionSummary})` : ''}`
                 : 'Add at least one graded assignment and this will show the score you need on the final.'}
             </p>
           </div>

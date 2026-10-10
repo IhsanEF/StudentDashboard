@@ -8,17 +8,17 @@ import { useViewMode } from '../hooks/useViewMode';
 import { NotificationPrefs, AppUser, DashboardBackup } from '../types';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { ViewModeToggle } from './ViewModeToggle';
-import { 
-  X, 
-  Bell, 
-  Clock, 
-  Moon, 
-  Sliders, 
-  Sparkles, 
-  Calendar as CalendarIcon, 
-  Check, 
-  AlertCircle, 
-  RefreshCw, 
+import {
+  X,
+  Bell,
+  Clock,
+  Moon,
+  Sliders,
+  Sparkles,
+  Calendar as CalendarIcon,
+  Check,
+  AlertCircle,
+  RefreshCw,
   User as UserIcon,
   CheckCircle2,
   Volume2,
@@ -114,7 +114,6 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
   const [loadingCalendarToken, setLoadingCalendarToken] = useState(false);
   const [calendarTokenError, setCalendarTokenError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [showCanvasFeedUrl, setShowCanvasFeedUrl] = useState(false);
 
   // Backup & Restore State
   const [pendingRestoreBackup, setPendingRestoreBackup] = useState<DashboardBackup | null>(null);
@@ -142,7 +141,6 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
       setSaveMessage(null);
       setShowDigestPreview(false);
       setShowDigestModal(false);
-      setShowCanvasFeedUrl(false);
     } else {
       setShowDigestPreview(false);
       setShowDigestModal(false);
@@ -214,9 +212,9 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
     };
   }, [isOpen, showDigestModal, showDigestPreview]);
 
-  const { modalRef, handleBackdropClick } = useModalFocus({ 
-    isOpen: isOpen && !showDigestModal, 
-    onClose: handleRequestClose 
+  const { modalRef, handleBackdropClick } = useModalFocus({
+    isOpen: isOpen && !showDigestModal,
+    onClose: handleRequestClose
   });
 
   // Cascade purge all user data across collections, calendar feed tokens, and local cache (V3-233)
@@ -408,7 +406,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
     try {
       const authHeaders = await getAuthHeader();
       if (!authHeaders.Authorization) {
-        setCalendarTokenError('Please sign in with your Google / UBC account to create your calendar link.');
+        setCalendarTokenError('Please sign in with your account to create your calendar link.');
         setLoadingCalendarToken(false);
         return;
       }
@@ -612,7 +610,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
       try {
         const json = JSON.parse(event.target?.result as string);
         if (!json.version || !json.data) {
-          throw new Error('Invalid UBC Dashboard backup file structure');
+          throw new Error('Invalid My LMSboard backup file structure');
         }
         setPendingRestoreBackup(json as DashboardBackup);
         setRestoreError(null);
@@ -638,7 +636,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = format === 'tar' ? 'ubc-study-flow-codebase.tar.gz' : 'ubc-study-flow-codebase.zip';
+      link.download = format === 'tar' ? 'my-lms-codebase.tar.gz' : 'my-lms-codebase.zip';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -674,7 +672,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
       const result = exportToCSV();
       setDownloadSuccessNotice(result
         ? `Exported ${result.taskCount} tasks to ${result.fileName}`
-        : 'No tasks to export yet. Add a task or import your Canvas calendar first.');
+        : 'No tasks to export yet. Add a task or upload a course outline first.');
     } catch (err: any) {
       setRestoreError(`CSV export failed: ${err.message || 'Please try again.'}`);
     }
@@ -755,19 +753,15 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
     ? 'Blocked in browser settings. Allow notifications for this site in your browser’s site settings, then reopen Settings.'
     : browserPermission === 'unsupported' ? 'Browser notifications are not supported in this browser.'
     : browserPermission === 'granted' ? 'Native desktop/tab notifications' : 'Click to enable browser permissions';
-  const maskedCanvasFeedUrl = (() => {
-    if (!prefs.savedCalendarFeedUrl) return '';
-    try { return `${new URL(prefs.savedCalendarFeedUrl).host} / …`; }
-    catch { return 'Saved calendar link / …'; }
-  })();
+
 
   return (
     <>
-      <div 
+      <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto"
         onClick={handleBackdropClick}
       >
-        <div 
+        <div
           ref={modalRef}
           role="dialog"
           aria-modal="true"
@@ -1397,97 +1391,6 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
             {/* 2. Calendar Tab */}
             {activeTab === 'calendar' && (
               <div className="space-y-5">
-                {/* Section 1: Import from Canvas calendar */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
-                      <RefreshCw className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                        Import from Canvas calendar
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Paste your Canvas calendar feed URL so the dashboard can automatically check for assignment deadlines.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pt-1">
-                    <div>
-                      <label htmlFor="canvas-calendar-url" className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                        Canvas calendar (.ics)
-                      </label>
-                      <input
-                        id="canvas-calendar-url"
-                        type={prefs.savedCalendarFeedUrl && !showCanvasFeedUrl ? 'text' : 'url'}
-                        readOnly={!!prefs.savedCalendarFeedUrl && !showCanvasFeedUrl}
-                        placeholder="https://canvas.ubc.ca/feeds/calendars/user_...ics"
-                        value={showCanvasFeedUrl ? prefs.savedCalendarFeedUrl || '' : maskedCanvasFeedUrl}
-                        onChange={e => {
-                          setShowCanvasFeedUrl(true);
-                          setPrefs(prev => ({ ...prev, savedCalendarFeedUrl: e.target.value.trim() }));
-                        }}
-                        className="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                      />
-                      <button
-                        type="button"
-                        aria-pressed={showCanvasFeedUrl}
-                        aria-controls="canvas-calendar-url"
-                        onClick={() => setShowCanvasFeedUrl(value => !value)}
-                        className="mt-1 text-xs text-blue-600 hover:underline"
-                      >
-                        {showCanvasFeedUrl ? 'Hide calendar link' : 'Reveal / edit calendar link'}
-                      </button>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                        Keep this URL private. Anyone with this link can view your Canvas course events.
-                        To regenerate an exposed link, ask your institution’s Canvas support to revoke and replace the calendar feed URL. Then copy the replacement from Canvas Calendar &gt; Calendar Feed and paste it here.
-                      </p>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-                        Find this on Canvas &gt; Calendar &gt; "Calendar Feed" at the bottom-right of the page.
-                      </p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
-                        Last checked: {prefs.lastCalendarAttempt || prefs.lastCalendarSync ? new Date(prefs.lastCalendarAttempt || prefs.lastCalendarSync!).toLocaleString() : 'Never'}
-                      </p>
-
-                      {prefs.lastCalendarSyncError && (
-                        <div className="mt-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start justify-between gap-3 text-xs">
-                          <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300">
-                            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                            <span>{prefs.lastCalendarSyncError}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                await updateNotificationPrefs(prefs);
-                              } catch {}
-                              window.dispatchEvent(new CustomEvent('ubc:sync-canvas-feed'));
-                            }}
-                            className="shrink-0 px-2.5 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-900/80 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            <span>Try again now</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1">
-                      <input
-                        id="autoSyncCalendar"
-                        type="checkbox"
-                        checked={prefs.autoSyncCalendar ?? true}
-                        onChange={e => setPrefs(prev => ({ ...prev, autoSyncCalendar: e.target.checked }))}
-                        className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                      <label htmlFor="autoSyncCalendar" className="text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-                        Check for Canvas updates every few hours while the dashboard is open
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Section 2: Add my deadlines to my calendar app */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
                   <div className="flex items-start gap-3">
@@ -1641,7 +1544,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
                         Export data
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Download your tasks, courses, timetable entries, and scheduled exams. JSON snapshots also include reminder and display settings; your private Canvas feed URL and reminder email are excluded.
+                        Download your tasks, courses, timetable entries, and scheduled exams. JSON snapshots also include reminder and display settings; private legacy integration settings and reminder email are excluded.
                       </p>
                     </div>
                   </div>
@@ -1731,7 +1634,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
                     >
                       <Upload className="w-6 h-6 text-slate-400" />
                       <span className="text-xs font-semibold">Click to select backup .json file</span>
-                      <span className="text-[11px] text-slate-400">Supports standard UBC Student Dashboard backup archives</span>
+                      <span className="text-[11px] text-slate-400">Supports standard My LMS backup archives</span>
                     </button>
                   ) : (
                     <div className="p-4 bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-xl space-y-3">
@@ -1874,14 +1777,14 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-xs">
-                      {(user?.displayName || user?.email || 'UBC')[0].toUpperCase()}
+                      {(user?.displayName || user?.email || 'General')[0].toUpperCase()}
                     </div>
                     <div>
                       <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                        {user?.displayName || 'UBC Student'}
+                        {user?.displayName || 'Student'}
                       </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {user?.email || (isDemoMode ? 'demo_student@ubc.ca' : 'Signed In')}
+                        {user?.email || (isDemoMode ? 'demo@example.com' : 'Signed In')}
                       </p>
                     </div>
                   </div>
@@ -1914,9 +1817,9 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
                       Install app
                     </span>
-                    <PWAInstallButton 
-                      variant="outline" 
-                      className="w-full justify-center" 
+                    <PWAInstallButton
+                      variant="outline"
+                      className="w-full justify-center"
                       showDismissibleHint={true}
                     />
                   </div>
@@ -2032,7 +1935,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
                         <strong>Storage & Retention:</strong> User-authored tasks, timetable entries, and course records are stored securely in your private user partition while your account is active. When you delete your data or account, all tasks, courses, timetable schedules, exam records, and private calendar feed tokens are immediately purged and revoked. Inactive accounts retain data for up to 12 months before being permanently expunged.
                       </p>
                       <p className="text-[11px] leading-relaxed">
-                        <strong>Contact:</strong> For privacy inquiries, GDPR/FIPPA erasure compliance, or manual support, contact <a href="mailto:privacy@ubcstudentdashboard.ca" className="text-blue-600 dark:text-blue-400 underline font-medium">privacy@ubcstudentdashboard.ca</a>.
+                        <strong>Support:</strong> Contact the owner of this deployment for account or privacy help.
                       </p>
                     </div>
                   </div>

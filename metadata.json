@@ -1,6 +1,6 @@
 {
-  "name": "UBC Student Dashboard",
-  "description": "A responsive student dashboard with AI-powered calendar, screenshot, camera, and syllabus import for Canvas coursework.",
+  "name": "My LMS",
+  "description": "Plan subjects, assignments, grades, and study time at any education level. Add coursework manually or upload course outlines.",
   "requestFramePermissions": ["camera", "display-capture"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

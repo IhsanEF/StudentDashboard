@@ -1,19 +1,19 @@
 import React, { useContext, useState } from 'react';
-import { 
-  Shield, 
-  Lock, 
-  Eye, 
-  Server, 
-  Sparkles, 
-  X, 
-  CheckCircle2, 
-  Trash2, 
-  Calendar, 
-  WifiOff, 
-  Users, 
-  Clock, 
-  AlertTriangle, 
-  RefreshCw 
+import {
+  Shield,
+  Lock,
+  Eye,
+  Server,
+  Sparkles,
+  X,
+  CheckCircle2,
+  Trash2,
+  Calendar,
+  WifiOff,
+  Users,
+  Clock,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { TaskContext } from '../hooks/useTasks';
@@ -33,30 +33,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
   });
 
   const taskContext = useContext(TaskContext);
-  const [isRemovingFeedUrl, setIsRemovingFeedUrl] = useState(false);
-  const [feedUrlRemovedNotice, setFeedUrlRemovedNotice] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-
-  const hasSavedFeedUrl = Boolean(taskContext?.notificationPrefs?.savedCalendarFeedUrl);
-
-  const handleRemoveSavedCalendarFeedUrl = async () => {
-    if (!taskContext) return;
-    setIsRemovingFeedUrl(true);
-    try {
-      await taskContext.updateNotificationPrefs({
-        ...taskContext.notificationPrefs,
-        savedCalendarFeedUrl: ''
-      });
-      setFeedUrlRemovedNotice(true);
-      taskContext.showToast({ message: 'Saved Canvas calendar feed URL removed from cloud profile.' });
-      setTimeout(() => setFeedUrlRemovedNotice(false), 4000);
-    } catch (e: any) {
-      console.error('Failed to remove saved calendar feed URL:', e);
-      taskContext.showToast({ message: `Failed to remove feed URL: ${e?.message || 'Unknown error'}` });
-    } finally {
-      setIsRemovingFeedUrl(false);
-    }
-  };
 
   const purgeUserDataCascade = async (uid: string) => {
     const subcollections = ['tasks', 'courses', 'classes', 'exams'];
@@ -151,14 +128,14 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-fade-in"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="privacy-modal-title"
     >
-      <div 
+      <div
         ref={modalRef}
         tabIndex={-1}
         className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden outline-none"
@@ -188,15 +165,15 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-5 text-sm text-slate-700 leading-relaxed">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 space-y-2">
             <h3 className="font-bold text-slate-900">About / Operator</h3>
-            <p>This independently hosted dashboard is operated by the owner of this deployment. It is not affiliated with, endorsed by, or operated by the University of British Columbia (UBC).</p>
+            <p>This independently hosted dashboard is operated by the owner of this deployment. It is not affiliated with, endorsed by, or operated by the any school or learning platform.</p>
             <p><strong>Storage & Processing Locations:</strong> Google Cloud Firestore stores your cloud records, and Google Gemini processes content you send to AI features through this app's server. These services may store or process data outside Canada, including in the United States. This deployment's exact storage and processing regions have not been verified; Canadian-only data residency is not guaranteed.</p>
           </div>
-          
+
           <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 flex items-start gap-3">
             <Sparkles className="shrink-0 text-blue-600 mt-0.5" size={16} />
             <div>
-              <span className="font-bold block mb-0.5 text-blue-950">No Direct Canvas API Connection Needed</span>
-              Your coursework comes only from what you give us: your Canvas calendar link, pasted Canvas emails, uploaded syllabi or spreadsheets, and screenshots. We never connect to Canvas directly or store your Canvas password.
+              <span className="font-bold block mb-0.5 text-blue-950">You choose what to add</span>
+              Your coursework comes only from your manual entries, uploaded course outlines, pasted course details, and screenshots. The dashboard does not connect to your school’s learning platform.
             </div>
           </div>
 
@@ -209,7 +186,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
               <div className="flex-1">
                 <h3 className="font-bold text-slate-900 text-sm">AI-Powered Features (Google Gemini)</h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  When you use AI features, the full text, syllabus files (PDF/DOCX/TXT), timetable schedules, or uploaded screenshots (such as Canvas gradebooks, course portals, or assignment briefs) are transmitted to the Google Gemini API via secure server-side proxy routes. 
+                  When you use AI features, the full text, syllabus files (PDF/DOCX/TXT), timetable schedules, or uploaded screenshots (such as grade reports, course portals, or assignment briefs) are transmitted to the Google Gemini API via secure server-side proxy routes.
                 </p>
                 <div className="mt-2 p-2.5 rounded-lg bg-purple-50/60 border border-purple-200/60 text-[11px] text-purple-950 space-y-1">
                   <p className="font-semibold">Gemini-backed tools across the dashboard:</p>
@@ -228,49 +205,6 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
                     <strong>Data Use & Retention:</strong> This deployment's Gemini billing tier has not been verified, so we cannot promise that uploads and responses are excluded from model improvement or retained only transiently. Google's treatment of content depends on the service tier and applicable terms. Avoid sending personal or confidential information. See the <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" className="underline text-blue-700">Gemini API terms</a> for details.
                   </p>
                 </div>
-              </div>
-            </div>
-
-            {/* Canvas Calendar Feeds (.ics), Storage, and Background Polling (V4-067, V4-291) */}
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
-                <Server size={16} />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-slate-900 text-sm">Canvas Calendar Feeds (.ics), Storage & 6-Hourly Polling</h3>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  When you provide a Canvas Calendar Feed URL or upload an .ics file, our server securely parses calendar events directly without third-party tracking or advertising. If you save your Canvas feed URL in Settings, the URL (including its private feed token) is securely stored in your cloud profile and auto-polled server-side every 6 hours (or once daily according to your preferences) to detect newly posted assignments and announcements. The saved feed URL is also included in your exported dashboard backup files so it can be restored.
-                </p>
-
-                {/* Remove saved Canvas feed URL control (V4-291) */}
-                {taskContext && (
-                  <div className="mt-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div>
-                      <span className="text-xs font-semibold text-slate-800 block">
-                        Saved Canvas Feed URL:
-                      </span>
-                      <span className="text-[11px] text-slate-500 font-mono truncate max-w-xs block">
-                        {hasSavedFeedUrl 
-                          ? `${taskContext.notificationPrefs.savedCalendarFeedUrl?.slice(0, 36)}...` 
-                          : 'No Canvas feed URL currently saved in profile.'}
-                      </span>
-                    </div>
-                    {hasSavedFeedUrl ? (
-                      <button
-                        type="button"
-                        onClick={handleRemoveSavedCalendarFeedUrl}
-                        disabled={isRemovingFeedUrl}
-                        className="px-3 py-1.5 text-xs font-semibold bg-white border border-amber-300 text-amber-900 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer shrink-0 disabled:opacity-50"
-                      >
-                        {isRemovingFeedUrl ? 'Removing...' : 'Remove saved Canvas feed URL'}
-                      </button>
-                    ) : feedUrlRemovedNotice ? (
-                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        <CheckCircle2 size={13} /> Feed URL Removed
-                      </span>
-                    ) : null}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -311,7 +245,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
               <div>
                 <h3 className="font-bold text-slate-900 text-sm">Server Telemetry, Diagnostics & User Profile Record</h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  <strong>Server Telemetry & Diagnostics:</strong> When your client interacts with server proxy endpoints (such as calendar feed sync, syllabus parsing, or AI tools), our server logs request timestamps, error traces, and client IP addresses for security diagnostics, rate limiting, and system reliability. Diagnostic logs are purged on rolling cycles.
+                  <strong>Server Telemetry & Diagnostics:</strong> When your client interacts with server proxy endpoints (such as course-outline parsing or AI tools), our server logs request timestamps, error traces, and client IP addresses for security diagnostics, rate limiting, and system reliability. Diagnostic logs are purged on rolling cycles.
                 </p>
                 <p className="text-xs text-slate-600 mt-1">
                   <strong>User Profile Document:</strong> Your cloud account root record (<code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">users/{'{uid}'}</code>) stores your authenticated email, display name, account creation date, and notification preferences.

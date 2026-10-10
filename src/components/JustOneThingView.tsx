@@ -4,15 +4,15 @@ import { Task } from '../types';
 import { getCourseColor, formatReadableDate, isScheduleEvent, getTaskUrgencyCategory, safeGetTime } from '../utils';
 import { pickNextTasks } from '../services/focusService';
 import { setUserInitiatedFocus } from './FloatingFocusTimer';
-import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  CheckCircle2, 
-  ArrowLeft, 
-  SkipForward, 
-  Calendar, 
-  Clock, 
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  CheckCircle2,
+  ArrowLeft,
+  SkipForward,
+  Calendar,
+  Clock,
   Check
 } from 'lucide-react';
 
@@ -21,15 +21,15 @@ interface JustOneThingViewProps {
 }
 
 export default function JustOneThingView({ onExit }: JustOneThingViewProps) {
-  const { 
+  const {
     tasks, now,
-    updateTask, 
-    startFocusTimer, 
-    activeFocus, 
-    pauseFocusTimer, 
-    resumeFocusTimer, 
+    updateTask,
+    startFocusTimer,
+    activeFocus,
+    pauseFocusTimer,
+    resumeFocusTimer,
     resetFocusTimer,
-    stopAndLogFocusTimer 
+    stopAndLogFocusTimer
   } = useFocusTimerContext();
 
   const [skipIndex, setSkipIndex] = useState(0);
@@ -181,7 +181,7 @@ export default function JustOneThingView({ onExit }: JustOneThingViewProps) {
           <h1 className="text-2xl font-black text-slate-900 mb-2">Focus on one task</h1>
           <p className="text-sm text-slate-500 mb-6">
             {tasks.length === 0
-              ? 'Nothing here yet. Paste your Canvas calendar link (Smart Import) to bring in every due date, or add a task by hand.'
+              ? 'Nothing here yet. Upload a course outline to add deadlines, or add a task by hand.'
               : 'Nothing pending.'}
           </p>
           <button
@@ -291,7 +291,7 @@ export default function JustOneThingView({ onExit }: JustOneThingViewProps) {
           </div>
 
           <div className="w-full max-w-xs bg-slate-100 h-2.5 rounded-full mt-4 overflow-hidden border border-slate-200">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />

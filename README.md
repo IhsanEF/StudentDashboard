@@ -1,6 +1,6 @@
-# UBC Student Dashboard
+# My LMS
 
-A full-stack student dashboard application with AI-powered course, task, and syllabus extraction, Canvas calendar sync, grades overview, and Firebase Firestore persistence.
+A study planner for students at any education level, with manual course and task entry, course-outline uploads, AI-powered course, task, and syllabus extraction, grades overview, and Firebase Firestore persistence.
 
 ## Architecture
 

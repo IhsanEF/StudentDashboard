@@ -2,10 +2,10 @@ import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import React from 'react';
 import { useTasksContext } from '../hooks/useTasks';
 import { TabType, AppUser, SIMPLE_TABS, MORE_TABS } from '../types';
-import { 
-  LayoutDashboard, Flame, CheckSquare, BookOpen, TrendingUp, Award, Bell, 
-  Calendar as CalendarIcon, LogOut, Download, AlertTriangle, 
-  Sparkles, WifiOff, CloudUpload, Shield, Sliders, Users, Inbox, 
+import {
+  LayoutDashboard, Flame, CheckSquare, BookOpen, TrendingUp, Award, Bell,
+  Calendar as CalendarIcon, LogOut, Download, AlertTriangle,
+  Sparkles, WifiOff, CloudUpload, Shield, Sliders, Users, Inbox,
   Menu, X, Smartphone, GraduationCap, ChevronDown, RotateCw, Plus, ArrowLeft
 } from 'lucide-react';
 import { cn, formatInTimeZone, TIMEZONE } from '../utils';
@@ -104,7 +104,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
       }
     };
     window.addEventListener('app-announce', handleAnnounce);
-    
+
     // Register global announce helper if not already defined
     if (typeof window !== 'undefined') {
       (window as any).announce = (message: string) => {
@@ -137,7 +137,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = 'ubc-study-flow-codebase.zip';
+      link.download = 'my-lms-codebase.zip';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -193,7 +193,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
     { label: 'Timetable', icon: CalendarIcon, desc: 'Weekly classes and exam clash check' },
     { label: 'Groups', icon: Users, desc: 'Shared task board for group projects' },
     { label: 'Progress', icon: TrendingUp, desc: "How much you've finished, by course" },
-    { label: 'Announcements', icon: Bell, desc: "Canvas announcements you've pasted in" },
+    { label: 'Announcements', icon: Bell, desc: "Notes and announcements from your courses" },
   ];
 
   const isSimpleView = (uiPrefs.viewMode || 'simple') === 'simple';
@@ -250,12 +250,12 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
     }
   };
 
-  const isAnyModalOpen = isQuickAddOpen || 
-    isImportOpen || 
-    isPrivacyModalOpen || 
-    isSettingsOpen || 
-    isReviewInboxOpen || 
-    !!selectedTaskForEditId || 
+  const isAnyModalOpen = isQuickAddOpen ||
+    isImportOpen ||
+    isPrivacyModalOpen ||
+    isSettingsOpen ||
+    isReviewInboxOpen ||
+    !!selectedTaskForEditId ||
     isMobileMoreOpen;
 
   return (
@@ -270,10 +270,10 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
       >
         Skip to main content
       </a>
-      
+
       {/* Desktop & Tablet Sidebar */}
       {!isFocusModeActive && (
-        <nav 
+        <nav
           aria-label="Sidebar navigation"
           className="hidden md:flex flex-col w-60 lg:w-64 bg-[#002145] text-white shrink-0 z-30 select-none border-r border-white/10 h-screen h-dvh max-h-dvh sticky top-0"
         >
@@ -283,7 +283,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             <GraduationCap size={20} className="text-yellow-300" />
           </div>
           <div>
-            <h1 className="text-base font-black tracking-tight leading-tight">UBC Student</h1>
+            <h1 className="text-base font-black tracking-tight leading-tight">My LMS</h1>
             <p className="text-[10px] text-blue-200 uppercase tracking-widest font-bold">Dashboard</p>
           </div>
         </div>
@@ -309,8 +309,8 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
                       "w-full flex items-center justify-between py-2.5 px-3.5 rounded-xl text-xs lg:text-sm font-medium transition-all cursor-pointer min-h-[44px]",
-                      isActive 
-                        ? "bg-white/15 font-bold text-white shadow-xs" 
+                      isActive
+                        ? "bg-white/15 font-bold text-white shadow-xs"
                         : "text-blue-100 hover:bg-white/5 hover:text-white"
                     )}
                   >
@@ -319,7 +319,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.label === 'Tasks' && pendingReviewCount > 0 && (
-                      <span 
+                      <span
                         title={`${pendingReviewCount} imported item${pendingReviewCount === 1 ? '' : 's'} to check`}
                         className="ml-auto px-1.5 py-0.5 text-xs font-bold rounded-full bg-amber-400 text-slate-900 shrink-0 shadow-xs"
                       >
@@ -363,8 +363,8 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                           aria-current={isActive ? "page" : undefined}
                           className={cn(
                             "w-full flex items-center space-x-3 py-2 px-3 rounded-xl text-xs lg:text-sm font-medium transition-all cursor-pointer min-h-[40px]",
-                            isActive 
-                              ? "bg-white/15 font-bold text-white shadow-xs" 
+                            isActive
+                              ? "bg-white/15 font-bold text-white shadow-xs"
                               : "text-blue-100 hover:bg-white/5 hover:text-white"
                           )}
                         >
@@ -389,8 +389,8 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "w-full flex items-center justify-between py-2.5 px-3.5 rounded-xl text-xs lg:text-sm font-medium transition-all cursor-pointer min-h-[44px]",
-                    isActive 
-                      ? "bg-white/15 font-bold text-white shadow-xs" 
+                    isActive
+                      ? "bg-white/15 font-bold text-white shadow-xs"
                       : "text-blue-100 hover:bg-white/5 hover:text-white"
                   )}
                 >
@@ -399,7 +399,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                     <span className="truncate">{item.label}</span>
                   </div>
                   {item.label === 'Tasks' && pendingReviewCount > 0 && (
-                    <span 
+                    <span
                       title={`${pendingReviewCount} imported item${pendingReviewCount === 1 ? '' : 's'} to check`}
                       className="ml-auto px-1.5 py-0.5 text-xs font-bold rounded-full bg-amber-400 text-slate-900 shrink-0 shadow-xs"
                     >
@@ -411,7 +411,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             })
           )}
         </div>
-        
+
         {/* Bottom User Profile Section */}
         <div className="p-3.5 m-3 bg-white/5 rounded-2xl border border-white/10 mt-auto space-y-2.5 shrink-0">
           <div className="flex items-center space-x-2.5">
@@ -489,7 +489,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
         "flex-1 flex flex-col min-w-0 min-h-0 bg-[#f8fafc] overflow-hidden h-full max-h-full",
         !isFocusModeActive && "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:pb-0"
       )}>
-        
+
         {/* Header */}
         <header className="h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] bg-white border-b border-slate-200 px-3 sm:px-6 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-40 gap-2">
           {/* Left Title & Date group - preserved width, never shrinks to 0px */}
@@ -518,7 +518,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
               </button>
             ) : (
               <>
-            {/* Quick Add with '+' menu: Add task / Import from Canvas */}
+            {/* Quick Add with '+' menu: Add task / Upload a course outline */}
             <div className="relative shrink-0" ref={addMenuRef}>
               <button
                 type="button"
@@ -536,7 +536,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
               </button>
 
               {isAddMenuOpen && (
-                <div 
+                <div
                   role="menu"
                   aria-orientation="vertical"
                   className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl border border-slate-200 shadow-xl z-50 py-1.5 animate-in fade-in zoom-in-95 duration-100"
@@ -570,24 +570,24 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             </div>
 
             {/* Header Sync Status Indicator */}
-            <div 
+            <div
               id="header-sync-status"
               className={cn(
                 "hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-colors",
-                isDemoMode 
-                  ? "bg-amber-50 text-amber-900 border border-amber-200" 
-                  : hasPendingWrites 
-                    ? "bg-blue-50 text-blue-700 border border-blue-200" 
+                isDemoMode
+                  ? "bg-amber-50 text-amber-900 border border-amber-200"
+                  : hasPendingWrites
+                    ? "bg-blue-50 text-blue-700 border border-blue-200"
                     : "bg-slate-100 text-slate-700 border border-slate-200"
               )}
               title={isDemoMode ? "NOT SAVED / Demo data only — changes are stored in memory only and will not be saved" : hasPendingWrites ? "Changes are still being saved" : lastSync ? `Last saved update received on ${formatInTimeZone(lastSync, TIMEZONE, 'MMM d, yyyy, h:mm a zzz')}` : "No saved update has been received yet"}
             >
               <span className={cn("w-2 h-2 rounded-full shrink-0", isDemoMode ? "bg-amber-500" : hasPendingWrites ? "bg-blue-500 animate-pulse" : "bg-emerald-500")} />
               <span className="whitespace-nowrap font-medium">
-                {isDemoMode 
+                {isDemoMode
                   ? 'Demo - not saved'
-                  : hasPendingWrites 
-                    ? 'Saving...' 
+                  : hasPendingWrites
+                    ? 'Saving...'
                     : lastSync ? `Last saved ${formatInTimeZone(lastSync, TIMEZONE, 'h:mm a')}` : 'Awaiting saved data'}
               </span>
             </div>
@@ -650,7 +650,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
 
         {/* Pending Sync Notice */}
         {!isFocusModeActive && isOnline && hasPendingWrites && (
-          <div 
+          <div
             role="status"
             aria-live="polite"
             className="bg-blue-50 border-b border-blue-200 px-4 md:px-8 py-2 flex items-center gap-2 text-blue-800 text-xs font-medium shrink-0"
@@ -662,7 +662,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
 
         {/* Error Banner */}
         {!isFocusModeActive && error && (
-          <div 
+          <div
             role="alert"
             aria-live="assertive"
             className="bg-red-50 border-b border-red-100 px-4 md:px-8 py-3 flex items-start gap-3 shrink-0"
@@ -738,7 +738,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
 
       {/* Mobile Bottom Navigation Bar (Screens < 768px) */}
       {!isFocusModeActive && (
-      <nav 
+      <nav
         aria-label="Mobile Bottom Navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#002145] text-white border-t border-white/10 shadow-2xl pb-[env(safe-area-inset-bottom,0px)]"
       >
@@ -755,8 +755,8 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center justify-center h-full py-1 text-center transition-all cursor-pointer select-none",
-                  isActive 
-                    ? "text-white font-bold" 
+                  isActive
+                    ? "text-white font-bold"
                     : "text-blue-200 hover:text-white"
                 )}
               >
@@ -766,7 +766,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                 )}>
                   <Icon size={20} className={isActive ? "text-white" : "text-blue-200"} />
                   {item.label === 'Tasks' && pendingReviewCount > 0 && (
-                    <span 
+                    <span
                       title={`${pendingReviewCount} imported item${pendingReviewCount === 1 ? '' : 's'} to check`}
                       className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center bg-amber-400 text-slate-900 text-xs font-bold rounded-full shadow-xs"
                     >
@@ -790,7 +790,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             className={cn(
               "flex flex-col items-center justify-center h-full py-1 text-center transition-all cursor-pointer select-none relative",
               isCurrentTabSecondary || isMobileMoreOpen
-                ? "text-white font-bold" 
+                ? "text-white font-bold"
                 : "text-blue-200 hover:text-white"
             )}
           >
@@ -815,7 +815,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
       {/* Mobile "More" Slide-up Drawer / Sheet */}
       {isMobileMoreOpen && (
         <ErrorBoundary isDemoMode={isDemoMode} fallbackTitle="Navigation menu unavailable" onReset={() => setIsMobileMoreOpen(false)}>
-        <div 
+        <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="mobile-more-title"
@@ -824,7 +824,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
           className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
           onClick={() => setIsMobileMoreOpen(false)}
         >
-          <div 
+          <div
             className="bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto overscroll-contain shadow-2xl p-5 border-t border-slate-200 text-slate-800 space-y-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"
             onClick={e => e.stopPropagation()}
           >
@@ -843,7 +843,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                 )}
                 <div className="overflow-hidden">
                   <h3 id="mobile-more-title" className="text-sm font-bold text-slate-900 truncate">
-                    {user?.displayName || 'UBC Student'}
+                    {user?.displayName || 'Student'}
                   </h3>
                   <p className="text-xs text-slate-500 truncate">{user?.email}</p>
                 </div>
@@ -884,8 +884,8 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all cursor-pointer min-h-[50px] border",
-                        isActive 
-                          ? "bg-blue-50/80 border-blue-300 text-blue-900 font-bold shadow-2xs" 
+                        isActive
+                          ? "bg-blue-50/80 border-blue-300 text-blue-900 font-bold shadow-2xs"
                           : "bg-slate-50 hover:bg-slate-100/80 border-slate-200/80 text-slate-700"
                       )}
                     >
@@ -916,11 +916,11 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                 <span>Review Inbox ({pendingReviewCount})</span>
               </button>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Account</p>
-              
+
               {/* PWA Install Button in Mobile Sheet */}
-              <PWAInstallButton 
-                variant="outline" 
-                className="w-full justify-center" 
+              <PWAInstallButton
+                variant="outline"
+                className="w-full justify-center"
                 showDismissibleHint={true}
                 onInstalled={() => setIsMobileMoreOpen(false)}
               />
@@ -1050,8 +1050,8 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
       {/* Floating Pomodoro & Deep Work Focus Timer (stacked at z-40, hidden when any modal or More sheet is open) */}
       {!isAnyModalOpen && !timerDismissed && (
         <ErrorBoundary isDemoMode={isDemoMode} fallbackTitle="Focus timer unavailable" onReset={() => setTimerDismissed(true)}>
-        <div 
-          id="floating-focus-timer-host" 
+        <div
+          id="floating-focus-timer-host"
           className="z-40 relative [body:has([role=dialog]:not(#focus-log-dialog))_&]:hidden [&_aside]:z-40 [&_aside]:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:[&_aside]:bottom-6"
         >
           <FloatingFocusTimer />

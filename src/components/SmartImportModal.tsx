@@ -1,7 +1,7 @@
 import { reportError } from '../services/errorReporter';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-  Upload, Link2, FileSpreadsheet, Image as ImageIcon, Calendar, 
+import {
+  Upload, Link2, FileSpreadsheet, Image as ImageIcon, Calendar,
   CheckCircle, Loader2, AlertCircle, X, Sparkles, Plus, ArrowRight,
   Camera, Monitor, Clock, Play, RotateCcw, BookOpen, CheckSquare, Shield, Filter, Mail, Info
 } from 'lucide-react';
@@ -19,7 +19,7 @@ const SyllabusImportBody = React.lazy(() => import('./SyllabusImportModal').then
 
 export type { ImportTabType };
 
-const DEMO_IMPORT_MESSAGE = "Sign in with Google to import. Demo mode can't extract from pasted emails, files or calendar links.";
+const DEMO_IMPORT_MESSAGE = "Sign in with Google or email to import. Demo mode can't extract from course text, files, or screenshots.";
 
 // Validate and format a due date string into Vancouver date (YYYY-MM-DD)
 export function validateDueDate(dateStr?: string | null): string {
@@ -49,8 +49,8 @@ function getDemoExtractedData(
         id: 'course-demo-cpsc-310',
         course_code: 'CPSC 310',
         course_name: 'Introduction to Software Engineering',
-        instructor: 'Dr. Reid Holmes',
-        instructor_email: 'rholmes@cs.ubc.ca',
+        instructor: 'A. Example',
+        instructor_email: 'teacher@example.com',
         meeting_times: 'MWF 10:00 - 11:00 AM',
         start_date: '2026-09-08',
         end_date: '2026-12-08',
@@ -97,7 +97,7 @@ function getDemoExtractedData(
         course_code: 'MATH 200',
         course_name: 'Multivariable Calculus',
         instructor: 'Dr. James Colliander',
-        instructor_email: 'colliander@math.ubc.ca',
+        instructor_email: 'teacher@example.com',
         meeting_times: 'MWF 11:00 AM - 12:00 PM',
         start_date: '2026-09-08',
         end_date: '2026-12-08',
@@ -148,7 +148,7 @@ function getDemoExtractedData(
         course_code: 'DSCI 100',
         course_name: 'Introduction to Data Science',
         instructor: 'Dr. Tiffany Timbers',
-        instructor_email: 'ttimbers@stat.ubc.ca',
+        instructor_email: 'teacher@example.com',
         meeting_times: 'TR 9:30 - 11:00 AM',
         start_date: '2026-09-08',
         end_date: '2026-12-08',
@@ -167,7 +167,7 @@ function getDemoExtractedData(
         source: 'email',
         is_syllabus_only: false,
         is_past: false,
-        summary: 'Midterm 1 will take place in Woodward IRC 2. Extra practice problem solutions posted on website.',
+        summary: 'Midterm 1 will take place in Room 202. Extra practice problem solutions posted on website.',
         canvas_url: '',
         check_again_at: '',
         source_message_id: '',
@@ -178,7 +178,7 @@ function getDemoExtractedData(
         grade_text: '',
         feedback: '',
         progress_notes: '',
-        next_action: 'Attend review session in Woodward IRC 2',
+        next_action: 'Attend review session in Room 202',
         last_interaction_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -195,7 +195,7 @@ function getDemoExtractedData(
           course_code: 'MATH 200',
           course_name: 'Multivariable Calculus',
           instructor: 'Dr. James Colliander',
-          instructor_email: 'colliander@math.ubc.ca',
+          instructor_email: 'teacher@example.com',
           meeting_times: 'Tue/Thu 9:30 AM - 11:00 AM (MATX 1100)',
           start_date: '2026-09-08',
           end_date: '2026-12-08',
@@ -355,8 +355,8 @@ function getDemoExtractedData(
         id: 'course-demo-cpsc-310',
         course_code: 'CPSC 310',
         course_name: 'Introduction to Software Engineering',
-        instructor: 'Dr. Reid Holmes',
-        instructor_email: 'rholmes@cs.ubc.ca',
+        instructor: 'A. Example',
+        instructor_email: 'teacher@example.com',
         meeting_times: 'MWF 10:00 - 11:00 AM',
         start_date: '2026-09-08',
         end_date: '2026-12-08',
@@ -461,8 +461,8 @@ function getDemoExtractedData(
         id: 'course-demo-cpsc-310',
         course_code: 'CPSC 310',
         course_name: 'Introduction to Software Engineering',
-        instructor: 'Dr. Reid Holmes',
-        instructor_email: 'rholmes@cs.ubc.ca',
+        instructor: 'A. Example',
+        instructor_email: 'teacher@example.com',
         meeting_times: 'MWF 10:00 - 11:00 AM',
         start_date: '2026-09-08',
         end_date: '2026-12-08',
@@ -486,7 +486,7 @@ function getDemoExtractedData(
         source: 'calendar_feed',
         is_syllabus_only: false,
         is_past: false,
-        summary: 'Canvas calendar event for CPSC 310 Lab 3.',
+        summary: 'Sample assignment for CPSC 310 Lab 3.',
         canvas_url: calendarUrl || '',
         check_again_at: '',
         source_message_id: '',
@@ -507,8 +507,8 @@ function getDemoExtractedData(
       id: 'course-demo-cpsc-310',
       course_code: 'CPSC 310',
       course_name: 'Introduction to Software Engineering',
-      instructor: 'Dr. Reid Holmes',
-      instructor_email: 'rholmes@cs.ubc.ca',
+      instructor: 'A. Example',
+      instructor_email: 'teacher@example.com',
       meeting_times: 'MWF 10:00 - 11:00 AM',
       start_date: '2026-09-08',
       end_date: '2026-12-08',
@@ -597,16 +597,16 @@ interface SmartImportModalProps {
   defaultTab?: ImportTabType;
 }
 
-export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email' }: SmartImportModalProps) {
+export default function SmartImportModal({ isOpen, onClose, defaultTab = 'file' }: SmartImportModalProps) {
   const { tasks, courses: existingCourses = [], addTask, updateTask, updateCourse, isDemoMode, uiPrefs, notificationPrefs } = useTasksContext();
   const isSimpleView = uiPrefs?.viewMode === 'simple';
   const [aiAvailable, setAiAvailable] = useState(true);
-  const [activeMode, setActiveMode] = useState<ImportTabType>(defaultTab);
+  const [activeMode, setActiveMode] = useState<ImportTabType>(defaultTab === 'calendar' ? 'file' : defaultTab);
 
   const getActionName = (mode: ImportTabType): string => {
     switch (mode) {
-      case 'email': return 'Email import';
-      case 'calendar': return 'Import from Canvas calendar';
+      case 'email': return 'Course details import';
+      case 'calendar': return 'Upload a course outline calendar';
       case 'screenshot': return 'Screenshot import';
       case 'syllabus': return 'Syllabus import';
       case 'file': return 'File import';
@@ -638,10 +638,10 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
   const [filterOutLectures, setFilterOutLectures] = useState(true);
   const [ignorePastDays, setIgnorePastDays] = useState<number>(0); // 0 = don't filter out by days, or e.g. 7, 14, 30
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
-  
+
   // Screenshot Sub-mode: 'upload' | 'screen' | 'camera'
   const [screenshotMethod, setScreenshotMethod] = useState<'upload' | 'screen' | 'camera'>('upload');
-  
+
   // File upload state
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -660,7 +660,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   // Extracted preview results before saving
   const [extractedTasks, setExtractedTasks] = useState<Task[]>([]);
   const [extractedCourses, setExtractedCourses] = useState<Course[]>([]);
@@ -692,11 +692,11 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
     isOpen,
     onClose: handleModalClose
   });
-  
+
   // Update active mode when defaultTab changes or modal opens
   useEffect(() => {
     if (isOpen) {
-      setActiveMode(defaultTab);
+      setActiveMode(defaultTab === 'calendar' ? 'file' : defaultTab);
       setError(null);
       setSuccessMessage(null);
     }
@@ -944,7 +944,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
 
     const discoveredCodes = new Set(rawCourses.map(c => (c.course_code || '').trim().toUpperCase()));
     const inferredCourses: Course[] = [];
-    
+
     rawTasks.forEach(t => {
       const code = (t.course || '').trim();
       if (code && !discoveredCodes.has(code.toUpperCase())) {
@@ -1163,7 +1163,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
 
       if (activeMode === 'email') {
         if (!emailText.trim()) {
-          throw new Error('Please paste your Canvas email notification or message text.');
+          throw new Error('Please paste your course outline or assignment instructions.');
         }
 
         const res = await fetch('/api/parse/ai-extract', {
@@ -1171,39 +1171,18 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
           headers,
           body: JSON.stringify({
             textContent: emailText.trim(),
-            fileType: 'email'
+            fileType: 'syllabus', source: 'syllabus'
           }),
           signal: controller.signal
         });
 
-        const data = await parseResponseJson(res, 'AI could not extract assignments or announcements from this email.');
+        const data = await parseResponseJson(res, 'AI could not extract assignments or announcements from these course details.');
 
         if ((!data.tasks || data.tasks.length === 0) && (!data.courses || data.courses.length === 0)) {
-          throw new Error('No assignments, grades, or announcements detected in this email text.');
+          throw new Error('No assignments, grades, or announcements detected in these course details.');
         }
 
         populateExtractedData(data.tasks || [], data.courses || []);
-      } else if (activeMode === 'calendar') {
-        if (!calendarUrl.trim()) {
-          throw new Error('Paste a Canvas calendar feed URL or ICS text beginning with BEGIN:VCALENDAR.');
-        }
-
-        const res = await fetch('/api/parse/ics', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(/^BEGIN:VCALENDAR\b/i.test(calendarUrl.trim())
-            ? { icsData: calendarUrl.trim() }
-            : { url: calendarUrl.trim() }),
-          signal: controller.signal
-        });
-
-        const data = await parseResponseJson(res, 'Failed to process calendar feed.');
-
-        if (!data.tasks || data.tasks.length === 0) {
-          throw new Error('No assignments or events found in this calendar feed.');
-        }
-
-        populateExtractedData(data.tasks, data.courses || []);
       } else if (activeMode === 'screenshot' || (file && file.type.startsWith('image/'))) {
         if (!filePreview) throw new Error('Please upload, capture, or paste an image first.');
 
@@ -1232,19 +1211,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
       } else if (activeMode === 'file' && file) {
         const fileName = file.name.toLowerCase();
 
-        if (fileName.endsWith('.ics')) {
-          const icsText = await file.text();
-          const res = await fetch('/api/parse/ics', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ icsData: icsText }),
-            signal: controller.signal
-          });
-
-          const data = await parseResponseJson(res, 'Failed to parse .ics file.');
-
-          populateExtractedData(data.tasks || [], data.courses || []);
-        } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
           // Read Excel workbook as base64 and process on server
           const reader = new FileReader();
           const base64Promise = new Promise<string>((resolve, reject) => {
@@ -1447,7 +1414,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
   };
 
   return (
-    <div 
+    <div
       ref={modalRef}
       onClick={handleBackdropClick}
       role="dialog"
@@ -1456,7 +1423,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
       className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in"
     >
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
-        
+
         {/* Header */}
         <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-3">
@@ -1466,11 +1433,11 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
             <div>
               <h2 id="smart-import-title" className="text-xl font-bold text-slate-900">Import coursework</h2>
               <p className="text-xs text-slate-500 font-medium">
-                Canvas does not let apps connect directly, so bring your coursework in one of these ways.
+                Upload a course outline or paste course details to preview your subjects, tasks, and deadlines.
               </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleModalClose}
             aria-label="Close Smart Import modal"
             className="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
@@ -1499,24 +1466,16 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
               <div>
                 <p className="font-semibold text-blue-950">Sign In Required</p>
                 <p className="mt-0.5 text-blue-800">
-                  {getActionName(activeMode)} needs a signed-in account — try Quick Add instead, or sign in with Google to import coursework.
+                  {getActionName(activeMode)} needs a signed-in account — try Quick Add instead, or sign in to import coursework.
                 </p>
               </div>
             </div>
           ) : null}
-          
+
           {/* Main Mode Tabs */}
           {extractedTasks.length === 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 bg-slate-100 p-1.5 rounded-xl">
-              <button
-                type="button"
-                onClick={() => { setActiveMode('calendar'); setError(null); stopCameraStream(); }}
-                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeMode === 'calendar' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Calendar size={14} /> <span>Import from Canvas calendar</span>
-              </button>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 p-1.5 rounded-xl">
+
               <button
                 type="button"
                 onClick={() => { setActiveMode('email'); setError(null); stopCameraStream(); }}
@@ -1524,7 +1483,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                   activeMode === 'email' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Mail size={14} /> <span>Paste a Canvas email</span>
+                <Mail size={14} /> <span>Paste course details</span>
               </button>
               <button
                 type="button"
@@ -1533,7 +1492,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                   activeMode === 'file' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Upload size={14} /> <span>Syllabus / file</span>
+                <Upload size={14} /> <span>Upload file</span>
               </button>
               <button
                 type="button"
@@ -1551,16 +1510,16 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                   activeMode === 'syllabus' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <BookOpen size={14} /> <span>Syllabus / file</span>
+                <BookOpen size={14} /> <span>Course outline</span>
               </button>
             </div>
           )}
 
           {/* Error / Success Notice */}
           {error && (
-            <div 
-              role="alert" 
-              aria-live="assertive" 
+            <div
+              role="alert"
+              aria-live="assertive"
               className="bg-red-50 text-red-700 p-4 rounded-xl flex items-start gap-3 border border-red-200"
             >
               <AlertCircle className="shrink-0 mt-0.5" size={18} />
@@ -1569,9 +1528,9 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
           )}
 
           {successMessage && (
-            <div 
-              role="status" 
-              aria-live="polite" 
+            <div
+              role="status"
+              aria-live="polite"
               className="bg-emerald-50 text-emerald-800 p-4 rounded-xl flex items-center gap-3 border border-emerald-200"
             >
               <CheckCircle className="shrink-0 text-emerald-600" size={20} />
@@ -1582,26 +1541,26 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
           {/* Input Views (Before Extraction) */}
           {extractedTasks.length === 0 && (
             <>
-              {/* Option A: Canvas Email Notifications */}
+              {/* Pasted coursework */}
               {activeMode === 'email' && (
                 <div className="space-y-4">
                   <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-4 text-xs text-blue-900 space-y-1">
                     <p className="font-bold flex items-center gap-1.5 text-blue-950">
-                      <Mail size={14} /> Paste Any Canvas Notification or Forwarded Email:
+                      <Mail size={14} /> Paste course details or assignment instructions:
                     </p>
                     <p className="text-blue-800">
-                      Canvas does not allow direct 3rd-party student logins. Whenever you receive a Canvas email about a <strong>new assignment</strong>, <strong>due date change</strong>, <strong>graded assignment</strong>, or <strong>announcement</strong>, paste the email text below.
+                      Paste your course outline, assignment instructions, or notes about a <strong>new assignment</strong>, <strong>due date change</strong>, <strong>graded assignment</strong>, or <strong>announcement</strong>.
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
                     <label htmlFor="email-notification-textarea" className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                      Email Notification Text / Forwarded Message
+                      Course outline / assignment text
                     </label>
                     <textarea
                       id="email-notification-textarea"
                       rows={7}
-                      placeholder="Paste Canvas email here, for example:
+                      placeholder="Paste course details here, for example:
 'Due Date Change: Assignment 3 for CPSC 310 is now due Friday, Oct 24 at 11:59 PM. Points: 50. Please check Gradescope for submission guidelines.'"
                       value={emailText}
                       onChange={(e) => setEmailText(e.target.value)}
@@ -1635,7 +1594,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                       </button>
                       <button
                         type="button"
-                        onClick={() => setEmailText("Course Announcement: Midterm Review Session and Room Change\nCourse: DSCI 100\nDate: 2026-10-12\nMessage: Midterm 1 will take place next Tuesday in Woodward IRC 2. Extra practice problem solutions are posted on the course website.")}
+                        onClick={() => setEmailText("Course Announcement: Midterm Review Session and Room Change\nCourse: DSCI 100\nDate: 2026-10-12\nMessage: Midterm 1 will take place next Tuesday in Room 202. Extra practice problem solutions are posted on the course website.")}
                         className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 rounded-lg font-medium border border-slate-200 transition-colors cursor-pointer"
                       >
                         Sample Announcement
@@ -1645,73 +1604,10 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                 </div>
               )}
 
-              {/* Option B: Canvas Calendar URL */}
-              {activeMode === 'calendar' && (
-                <div className="space-y-4">
-                  <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-4 text-xs text-blue-900 space-y-1">
-                    <p className="font-bold flex items-center gap-1.5 text-blue-950">
-                      <Calendar size={14} /> How to get your Canvas calendar link:
-                    </p>
-                    <ol className="list-decimal list-inside space-y-0.5 text-blue-800 pl-1">
-                      <li>Go to <strong>Canvas</strong> &rarr; Click <strong>Calendar</strong> on the left bar</li>
-                      <li>Scroll down & click <strong>Calendar Feed</strong> in the bottom-right sidebar</li>
-                      <li>Copy that link (starts with <code className="bg-blue-100/80 px-1 py-0.5 rounded font-mono">https://canvas.ubc.ca/feeds/calendars/...</code>) and paste it below</li>
-                    </ol>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label htmlFor="calendar-feed-url-input" className="text-xs font-bold text-slate-700 uppercase tracking-wide">Your Canvas calendar link or ICS text</label>
-                    <textarea
-                      id="calendar-feed-url-input"
-                      rows={4}
-                      placeholder={'https://canvas.ubc.ca/feeds/calendars/user_...ics\nor paste ICS text beginning with BEGIN:VCALENDAR'}
-                      value={calendarUrl}
-                      onChange={(e) => setCalendarUrl(e.target.value)}
-                      className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
-                    />
-                  </div>
-
-                  {/* Lecture & Recurrence Filtering Option */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-start gap-3">
-                    <input
-                      id="filter-lectures-checkbox"
-                      type="checkbox"
-                      checked={filterOutLectures}
-                      onChange={(e) => setFilterOutLectures(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
-                    />
-                    <label htmlFor="filter-lectures-checkbox" className="text-xs text-slate-700 cursor-pointer">
-                      <span className="font-bold text-slate-900 block">Filter out recurring lectures & classes (Recommended)</span>
-                      Focus on assignments, quizzes, projects, exams, and coursework rather than recurring class meeting slots.
-                    </label>
-                  </div>
-
-                  {/* Ignore Past Items Option */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap">
-                    <div className="text-xs text-slate-700">
-                      <span className="font-bold text-slate-900 block">Past assignments window</span>
-                      <span className="text-slate-500">Ignore tasks completed or due prior to:</span>
-                    </div>
-                    <select
-                      id="ignore-past-days-select"
-                      value={ignorePastDays}
-                      onChange={(e) => setIgnorePastDays(parseInt(e.target.value, 10) || 0)}
-                      className="text-xs font-semibold px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                    >
-                      <option value={0}>Include all dates (past items unselected)</option>
-                      <option value={7}>Older than 7 days</option>
-                      <option value={14}>Older than 14 days</option>
-                      <option value={30}>Older than 30 days</option>
-                      <option value={60}>Older than 60 days</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
               {/* Option B: Screenshot / Camera / Screen Timer Capture */}
               {activeMode === 'screenshot' && (
                 <div className="space-y-4">
-                  
+
                   {/* Screenshot Sub-Mode Selector */}
                   <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
                     <button
@@ -1828,9 +1724,9 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-bold text-slate-800 text-sm">Window & Tab Screen Capture</p>
-                              <p className="text-xs text-slate-500">Pick a browser tab or window. Use a timer to switch to Canvas first!</p>
+                              <p className="text-xs text-slate-500">Pick a browser tab or window. Use a timer to switch to your course document first.</p>
                             </div>
-                            
+
                             {/* Timer Selection */}
                             <div className="flex items-center gap-2">
                               <Clock size={15} className="text-slate-500" />
@@ -1857,7 +1753,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                                   {countdown}s
                                 </div>
                                 <p className="text-xs font-semibold text-slate-600">
-                                  Switch to your Canvas tab/window now! Capturing in {countdown} seconds...
+                                  Switch to your document tab/window now! Capturing in {countdown} seconds...
                                 </p>
                               </div>
                             ) : (
@@ -1896,7 +1792,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                           <div className="relative rounded-xl overflow-hidden bg-black aspect-video max-h-64 mx-auto flex items-center justify-center border border-white/20">
                             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                           </div>
-                          
+
                           <div className="flex justify-center gap-3">
                             <button
                               type="button"
@@ -1923,7 +1819,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                   <div
                     role="button"
                     tabIndex={0}
-                    aria-label="Upload syllabus PDF, CSV, TXT, or ICS file"
+                    aria-label="Upload course outline PDF, CSV, TXT, or spreadsheet"
                     onClick={() => fileInputRef.current?.click()}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -1966,14 +1862,14 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                       </div>
                     ) : (
                       <div>
-                        <p className="font-bold text-slate-800 text-sm">Select Syllabus PDF, CSV, TXT, or .ics calendar file</p>
+                        <p className="font-bold text-slate-800 text-sm">Select Syllabus PDF, CSV, TXT, or spreadsheet</p>
                         <p className="text-xs text-slate-600 mt-1">Drag and drop or browse files (Enter / Space)</p>
                       </div>
                     )}
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".csv,.ics,.txt,.pdf,.md,.xlsx,.xls"
+                      accept=".csv,.txt,.pdf,.md,.xlsx,.xls"
                       onChange={handleFileChange}
                       className="sr-only"
                       tabIndex={-1}
@@ -2002,7 +1898,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
           {/* Preview & Review Extracted Items (After Analysis) */}
           {(extractedTasks.length > 0 || extractedCourses.length > 0) && (
             <div className="space-y-6">
-              
+
               {/* Header selection summary */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-100 p-3 rounded-xl gap-2">
                 <div>
@@ -2317,7 +2213,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                     isDemoMode ||
                     isProcessing ||
                     (!auth.currentUser) ||
-                    (activeMode === 'calendar' && !calendarUrl.trim()) ||
+
                     ((activeMode === 'screenshot' || activeMode === 'file') && !file && !filePreview) ||
                     (activeMode === 'email' && !emailText.trim())
                   }
@@ -2325,7 +2221,7 @@ export default function SmartImportModal({ isOpen, onClose, defaultTab = 'email'
                     isDemoMode
                       ? DEMO_IMPORT_MESSAGE
                       : !auth.currentUser
-                      ? "Please sign in with Google to import coursework."
+                      ? "Please sign in with Google or email to import coursework."
                       : undefined
                   }
                   className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"

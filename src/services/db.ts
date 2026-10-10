@@ -1,13 +1,13 @@
-import { 
-  collection, 
-  doc, 
+import {
+  collection,
+  doc,
   getDoc,
-  getDocs, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
   deleteField,
-  onSnapshot, 
+  onSnapshot,
   serverTimestamp,
   writeBatch,
   runTransaction,
@@ -17,15 +17,15 @@ import {
 } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { db } from '../auth';
-import { 
-  Task, 
-  Course, 
-  NotificationPrefs, 
-  DEFAULT_NOTIFICATION_PREFS, 
+import {
+  Task,
+  Course,
+  NotificationPrefs,
+  DEFAULT_NOTIFICATION_PREFS,
   UiPrefs,
   DEFAULT_UI_PREFS,
-  ClassScheduleItem, 
-  ExamItem, 
+  ClassScheduleItem,
+  ExamItem,
   DashboardBackupSnapshot,
   GroupProject,
   GroupTask,
@@ -44,7 +44,7 @@ export const INITIAL_SAMPLE_COURSES: Course[] = [
     instructor_email: '',
     meeting_times: getDemoMeetingTimes('CPSC 310'),
     ...getDemoTerm(),
-    online_links: 'https://canvas.ubc.ca',
+    online_links: 'https://example.com',
     outline_url: 'https://sites.google.com/view/cpsc310',
     other_links: 'https://piazza.com',
     grade_categories: [
@@ -62,9 +62,9 @@ export const INITIAL_SAMPLE_COURSES: Course[] = [
     instructor_email: '',
     meeting_times: getDemoMeetingTimes('MATH 200'),
     ...getDemoTerm(),
-    online_links: 'https://canvas.ubc.ca',
-    outline_url: 'https://www.math.ubc.ca',
-    other_links: 'https://webrtc.ubc.ca',
+    online_links: 'https://example.com',
+    outline_url: 'https://example.com',
+    other_links: 'https://example.com',
     grade_categories: [
       { id: 'cat-2-1', name: 'WebWork & Quizzes', weight: 15, dropLowest: 2, taskTypes: ['quiz', 'assignment'] },
       { id: 'cat-2-2', name: 'Midterm 1', weight: 20, dropLowest: 0, taskTypes: ['exam'] },
@@ -80,8 +80,8 @@ export const INITIAL_SAMPLE_COURSES: Course[] = [
     instructor_email: '',
     meeting_times: getDemoMeetingTimes('ENGL 112'),
     ...getDemoTerm(),
-    online_links: 'https://canvas.ubc.ca',
-    outline_url: 'https://english.ubc.ca',
+    online_links: 'https://example.com',
+    outline_url: 'https://example.com',
     other_links: '',
     grade_categories: [
       { id: 'cat-3-1', name: 'Essays & Papers', weight: 40, dropLowest: 0, taskTypes: ['assignment', 'project'] },
@@ -278,7 +278,7 @@ export function normalizeCourse(data: any, docId: string): Course {
   const course: Course = {
     id: typeof data?.id === 'string' && data.id.trim() ? data.id : docId,
     course_name: typeof data?.course_name === 'string' ? data.course_name : 'Untitled Course',
-    course_code: typeof data?.course_code === 'string' ? data.course_code : 'UBC',
+    course_code: typeof data?.course_code === 'string' ? data.course_code : 'General',
     instructor: typeof data?.instructor === 'string' ? data.instructor : '',
     instructor_email: typeof data?.instructor_email === 'string' ? data.instructor_email : '',
     meeting_times: typeof data?.meeting_times === 'string' ? data.meeting_times : '',
@@ -318,8 +318,8 @@ export const MAX_IMPORT_TASKS_CAP = 1500;
 
 // Subscribe to tasks
 export function subscribeToTasks(
-  userId: string, 
-  callback: (tasks: Task[], metadata: { fromCache: boolean; hasPendingWrites: boolean; isCapped?: boolean }) => void, 
+  userId: string,
+  callback: (tasks: Task[], metadata: { fromCache: boolean; hasPendingWrites: boolean; isCapped?: boolean }) => void,
   onError: (err: any) => void
 ) {
   const tasksRef = collection(db, 'users', userId, 'tasks');
@@ -379,10 +379,10 @@ export async function updateFirestoreTask(userId: string, taskId: string, update
 
 // Add task
 export async function addFirestoreTask(userId: string, task: Task) {
-  const validId = task.task_id && task.task_id.trim() 
+  const validId = task.task_id && task.task_id.trim()
     ? task.task_id.trim()
     : `task-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 9)}`;
-  
+
   const taskRef = doc(db, 'users', userId, 'tasks', validId);
   const docSnap = await getDoc(taskRef);
 
@@ -1051,32 +1051,14 @@ export async function restoreDashboardBackup(
         ...snapshot.notificationPrefs
       };
 
-      // Security hardening (V4-114 & V4-123): Strip calendar feed syncing and reminder email properties
-      // unless the backup was created by this exact user. Even if matching userId,
-      // validate feed URL host to prevent foreign/malicious calendar sync injection.
+      // Calendar-feed integration is retired; restoring a backup cannot reactivate it.
+      delete safeNotificationPrefs.savedCalendarFeedUrl;
+      delete safeNotificationPrefs.autoSyncCalendar;
+      delete safeNotificationPrefs.lastCalendarSync;
       const isSameUser = Boolean(snapshot.userId && snapshot.userId === userId);
       if (!isSameUser) {
-        delete safeNotificationPrefs.savedCalendarFeedUrl;
-        delete safeNotificationPrefs.autoSyncCalendar;
-        delete safeNotificationPrefs.lastCalendarSync;
         delete safeNotificationPrefs.customEmail;
         delete (safeNotificationPrefs as any).deliveryEmail;
-      } else if (safeNotificationPrefs.savedCalendarFeedUrl) {
-        try {
-          const parsed = new URL(safeNotificationPrefs.savedCalendarFeedUrl);
-          const host = parsed.hostname.toLowerCase();
-          const isTrusted = host === 'canvas.ubc.ca' || host.endsWith('.instructure.com') || host.endsWith('.ubc.ca');
-          if (!isTrusted) {
-            console.warn('Untrusted calendar feed host in backup stripped:', host);
-            delete safeNotificationPrefs.savedCalendarFeedUrl;
-            delete safeNotificationPrefs.autoSyncCalendar;
-            delete safeNotificationPrefs.lastCalendarSync;
-          }
-        } catch {
-          delete safeNotificationPrefs.savedCalendarFeedUrl;
-          delete safeNotificationPrefs.autoSyncCalendar;
-          delete safeNotificationPrefs.lastCalendarSync;
-        }
       }
 
       await updateUserNotificationPrefs(userId, safeNotificationPrefs);
@@ -1127,7 +1109,7 @@ export function normalizeGroupProject(data: any, docId?: string): GroupProject {
 
   // Defensively rebuild member_details (V4-111 & V4-006)
   const rawDetails = typeof data?.member_details === 'object' && data.member_details !== null && !Array.isArray(data.member_details)
-    ? data.member_details 
+    ? data.member_details
     : {};
   const cleanDetails: Record<string, GroupMember> = {};
 
@@ -1155,7 +1137,7 @@ export function normalizeGroupProject(data: any, docId?: string): GroupProject {
       continue;
     }
 
-    const displayName = rawDisplayName || (cleanKey === createdBy ? 'Group Creator' : 'UBC Student');
+    const displayName = rawDisplayName || (cleanKey === createdBy ? 'Group Creator' : 'Student');
 
     cleanDetails[cleanKey] = {
       uid: cleanKey, // Ensure uid matches key
@@ -1169,7 +1151,7 @@ export function normalizeGroupProject(data: any, docId?: string): GroupProject {
     if (!cleanDetails[memberUid]) {
       cleanDetails[memberUid] = {
         uid: memberUid,
-        displayName: memberUid === createdBy ? 'Group Creator' : 'UBC Student',
+        displayName: memberUid === createdBy ? 'Group Creator' : 'Student',
         role: memberUid === createdBy ? 'owner' : 'member'
       };
     }
@@ -1273,12 +1255,12 @@ export async function createFirestoreGroupProject(
   groupData: { name: string; course_code: string; description?: string; target_date?: string }
 ): Promise<GroupProject> {
   const groupId = `group-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  const inviteCode = `UBC${Math.floor(100 + Math.random() * 900)}`;
+  const inviteCode = `LMS${Math.floor(100 + Math.random() * 900)}`;
   const nowIso = new Date().toISOString();
 
   const member: GroupMember = {
     uid: userId,
-    displayName: userProfile.displayName || 'UBC Student',
+    displayName: userProfile.displayName || 'Student',
     role: 'owner'
   };
 
@@ -1328,7 +1310,7 @@ export async function joinFirestoreGroupByCode(
   const nowIso = new Date().toISOString();
   const newMember: GroupMember = {
     uid: userId,
-    displayName: userProfile.displayName || 'UBC Student',
+    displayName: userProfile.displayName || 'Student',
     role: 'member'
   };
 
@@ -1376,7 +1358,7 @@ export async function saveFirestoreGroupTask(
   if (!task.id) {
     cleanTaskData.created_at = nowIso;
     cleanTaskData.created_by = userId;
-    cleanTaskData.created_by_name = displayName.trim().slice(0, 200) || 'UBC Student';
+    cleanTaskData.created_by_name = displayName.trim().slice(0, 200) || 'Student';
   } else {
     delete cleanTaskData.created_by;
     delete cleanTaskData.created_by_name;

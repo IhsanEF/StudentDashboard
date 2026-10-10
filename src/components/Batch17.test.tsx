@@ -125,7 +125,7 @@ button(tree, 'Final Exam Calculator').props.onClick(); tree = grades.render();
 assert.equal(find(tree, n => n.type === 'FinalExamCalculatorCard'), undefined);
 assert.match(text(tree), /Confirm syllabus weights/);
 grades.context.tasks = []; tree = grades.render(); button(tree, 'Upload syllabus').props.onClick(); assert.deepEqual(grades.imports, ['syllabus']);
-assert.match(text(tree), /Add a score on any task, paste a Canvas grade email into Smart Import/);
+assert.match(text(tree), /Enter a score on a task or upload a course outline/);
 const courses = await harness('CoursesList'); courses.context.tasks = [unknown, announcement]; tree = courses.render();
 assert.match(text(tree), /TEST 101/); assert.doesNotMatch(text(tree), /ANN 100/);
 assert.match(text(tree), /Default weights - not from your syllabus/);

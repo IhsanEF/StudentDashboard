@@ -150,7 +150,7 @@ export default function App() {
     setIsDemo(true);
     setUser({
       uid: 'demo-student',
-      email: 'demo.student@ubc.ca',
+      email: 'demo@example.com',
       displayName: 'Demo Student',
       photoURL: ''
     });
@@ -172,13 +172,13 @@ export default function App() {
 
   if (!user) {
     return (
-      <Login 
+      <Login
         onLogin={(u, sent) => {
           setIsDemo(false);
           setVerificationSent(sent);
           setUser(u);
-        }} 
-        onDemoLogin={handleDemoLogin} 
+        }}
+        onDemoLogin={handleDemoLogin}
       />
     );
   }

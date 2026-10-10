@@ -17,7 +17,7 @@ interface OverviewProps {
 }
 
 export default function Overview({ onNavigate }: OverviewProps) {
-  const { tasks, now, setFocusModeActive, notificationPrefs, openImport, loading } = useTasksContext();
+  const { tasks, now, setFocusModeActive, openImport, loading } = useTasksContext();
   const { isSimple } = useViewMode();
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
@@ -102,11 +102,7 @@ export default function Overview({ onNavigate }: OverviewProps) {
   const nextWeekHours = workloadSummary.nextWeekHours;
 
   // 5. Add coursework strip check
-  const hasSavedFeedUrl = Boolean(
-    notificationPrefs.savedCalendarFeedUrl ||
-    (typeof localStorage !== 'undefined' && (localStorage.getItem('ubc_canvas_feed_url') || localStorage.getItem('canvas_calendar_url')))
-  );
-  const showAddCourseworkStrip = tasks.length === 0 || (tasks.length < 3 && !hasSavedFeedUrl);
+  const showAddCourseworkStrip = tasks.length < 3;
 
   return (
     <div className="space-y-6">
@@ -125,7 +121,7 @@ export default function Overview({ onNavigate }: OverviewProps) {
         ) : (
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center text-sm text-slate-500">
             {tasks.length === 0
-              ? 'Nothing here yet. Paste your Canvas calendar link (Smart Import) to bring in every due date, or add a task by hand.'
+              ? 'Nothing here yet. Add a task by hand or upload a course outline to bring in your deadlines.'
               : 'Nothing due soon.'}
           </div>
         )}
@@ -179,15 +175,15 @@ export default function Overview({ onNavigate }: OverviewProps) {
       {showAddCourseworkStrip && (
         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-slate-700">
           <p className="text-xs sm:text-sm text-slate-600">
-            Add coursework via Canvas calendar feed, syllabus files, screenshots, or email alerts.
+            Add subjects and tasks manually, or upload a course outline to preview your deadlines.
           </p>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => openImport('calendar')}
+              onClick={() => openImport('file')}
               className="px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-2xs cursor-pointer"
             >
-              Import from Canvas calendar
+              Upload a course outline
             </button>
             <button
               type="button"

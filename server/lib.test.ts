@@ -3,8 +3,19 @@ import ical from 'node-ical';
 import {
   validateDueDate, parseNaturalLanguageDate, parseNaturalLanguageTaskFallback,
   isPrivateOrReservedIp, validateAndResolveUrl, parseIcsEvents,
-  RecurringCalendarEventError, buildTaskVevent, normalizeTimeTo24h, normalizeImportedExamTimes,
+  RecurringCalendarEventError, buildTaskVevent, normalizeTimeTo24h, normalizeImportedExamTimes, normalizeCourseLabel, courseStorageId,
 } from './lib';
+
+for (const label of ['Grade 5 Mathematics', 'Welding Level 1', '数学 五年级', 'Études sociales']) {
+  assert.equal(normalizeCourseLabel(label), label);
+}
+assert.equal(normalizeCourseLabel('  Grade 5\nMathematics\t '), 'Grade 5 Mathematics');
+assert.equal(normalizeCourseLabel(null), 'General');
+assert.equal(normalizeCourseLabel({ bad: true } as any), 'General');
+assert.equal(normalizeCourseLabel('X'.repeat(150)).length, 100);
+assert.equal(courseStorageId('CPSC 310'), 'course-cpsc_310');
+assert.notEqual(courseStorageId('数学'), courseStorageId('英语'));
+assert.equal(courseStorageId('数学'), courseStorageId('数学'));
 
 for (const [input, expected] of [['3:30 PM', '15:30'], ['15h30', '15:30'], ['9:05', '09:05'], ['12am', '00:00'], ['12:00 PM', '12:00'], ['15:30:00', '15:30']]) {
   assert.equal(normalizeTimeTo24h(input), expected);
@@ -69,13 +80,13 @@ try {
     const allDay = buildTaskVevent({ task_id: 'a', title: 'Essay', course: 'ENGL 112', due_at: '2028-02-29' }, '20260101T000000Z', 'fallback');
     assert(allDay.includes('DTSTART;VALUE=DATE:20280229'));
     assert(allDay.includes('DTEND;VALUE=DATE:20280301'));
-    assert(allDay.includes('UID:task-a@ubc-dashboard'));
+    assert(allDay.includes('UID:task-a@my-lms'));
     const timed = buildTaskVevent({ due_at: '2026-01-01T12:00:00-08:00', title: 'A\r\nEND:VEVENT', summary: 'x\nBEGIN:VEVENT', canvas_url: 'javascript:alert(1)' }, '20260101T000000Z', 'fallback');
     assert(timed.includes('DTSTART:20260101T200000Z'));
     assert(timed.includes('DURATION:PT1H'));
     assert.equal(timed.filter(line => line === 'END:VEVENT').length, 1);
     assert(timed.every(line => !/[\r\n]/.test(line)));
-    assert(timed.includes('URL:https://canvas.ubc.ca'));
+    assert(!timed.includes('URL:'), 'Unsafe task links do not fall back to an institution URL');
     assert.deepEqual(buildTaskVevent({ due_at: '2026-02-30' }, '', ''), []);
   }
 } finally {

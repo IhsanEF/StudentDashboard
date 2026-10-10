@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import { Task, Course } from '../types';
 import { useTasksContext } from '../hooks/useTasks';
 import TaskCard from './TaskCard';
-import { getCourseColor, safeGetTime, isActiveAcademicTask, getUbcLetterGrade, normalizeCourseCode, pluralize } from '../utils';
+import { getCourseColor, safeGetTime, isActiveAcademicTask, normalizeCourseCode, pluralize } from '../utils';
 import { calculateCourseGrade } from '../services/gradeCalculatorService';
 import { CheckCircle2, Award, Clock, TrendingUp } from 'lucide-react';
 
 export default function ProgressTab() {
   const { tasks, courses, isDemoMode } = useTasksContext();
-  
+
   const activeTasks = useMemo(() => {
     return tasks.filter(isActiveAcademicTask);
   }, [tasks]);
@@ -22,7 +22,7 @@ export default function ProgressTab() {
     .filter(t => t.status === 'Done' || t.status === 'Submitted')
     .sort((a, b) => safeGetTime(b.last_interaction_at, 0) - safeGetTime(a.last_interaction_at, 0))
     .slice(0, 6);
-  
+
   const totalActive = activeTasks.length;
   const totalCompleted = activeTasks.filter(t => t.status === 'Done' || t.status === 'Submitted').length;
   const overallCompletionRate = totalActive > 0 ? Math.round((totalCompleted / totalActive) * 100) : 0;
@@ -36,8 +36,8 @@ export default function ProgressTab() {
       c.id !== 'course-3' &&
       !c.id?.startsWith('sample-') &&
       !c.id?.startsWith('fictional-') &&
-      c.instructor_email !== 'rholmes@cs.ubc.ca' &&
-      c.instructor_email !== 'wetton@math.ubc.ca'
+      c.instructor_email !== 'teacher@example.com' &&
+      c.instructor_email !== 'teacher@example.com'
     );
   }, [courses, isDemoMode]);
 
@@ -161,11 +161,11 @@ export default function ProgressTab() {
           }
         });
 
-        return { 
-          course: course.course_code, 
-          completionPercent, 
-          completed, 
-          total, 
+        return {
+          course: course.course_code,
+          completionPercent,
+          completed,
+          total,
           gradeAverage,
           pointsEarned: Math.round(pointsEarned * 10) / 10,
           pointsPossible: Math.round(pointsPossible * 10) / 10,
@@ -200,7 +200,7 @@ export default function ProgressTab() {
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Overall Grade Average</p>
             <p className="text-2xl font-extrabold text-slate-900 mt-0.5">
-              {overallGradeAvg !== null ? `${overallGradeAvg.toFixed(1)}% (${getUbcLetterGrade(overallGradeAvg)})` : 'N/A'}
+              {overallGradeAvg !== null ? `${overallGradeAvg.toFixed(1)}%` : 'N/A'}
             </p>
             <p className="text-xs text-slate-500 font-medium">
               {coursesWithGrades.length > 0 ? `${coursesWithGrades.length} graded ${coursesWithGrades.length === 1 ? 'course' : 'courses'} (syllabus-weighted)` : 'No graded courses yet'}
@@ -266,11 +266,11 @@ export default function ProgressTab() {
                     </div>
                     <div className="text-right shrink-0">
                       {stat.gradeAverage !== null ? (
-                        <span 
+                        <span
                           className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2 py-0.5 rounded-lg"
                           title="Syllabus-weighted grade standing (matches Grades tab)"
                         >
-                          <Award size={12} /> Syllabus: {stat.gradeAverage.toFixed(1)}% ({getUbcLetterGrade(stat.gradeAverage)})
+                          <Award size={12} /> Syllabus: {stat.gradeAverage.toFixed(1)}%
                         </span>
                       ) : (
                         <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -279,11 +279,11 @@ export default function ProgressTab() {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Visual Completion Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2">
-                    <div 
-                      className={`h-2.5 rounded-full transition-all duration-500 ${getCourseColor(stat.course as string).split(' ')[0]}`} 
+                    <div
+                      className={`h-2.5 rounded-full transition-all duration-500 ${getCourseColor(stat.course as string).split(' ')[0]}`}
                       style={{ width: `${stat.completionPercent}%` }}
                     ></div>
                   </div>
@@ -294,7 +294,7 @@ export default function ProgressTab() {
             )}
           </div>
         </div>
-        
+
         {/* Recently Completed Section */}
         <div>
           <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">

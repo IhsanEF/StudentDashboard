@@ -53,7 +53,7 @@ function CourseModal({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       ref={modalRef}
       onClick={handleBackdropClick}
       role="dialog"
@@ -66,46 +66,46 @@ function CourseModal({
           <h2 id="course-modal-title" className="text-xl font-bold text-slate-900">
             {isEdit ? 'Edit Course' : 'Add Course'}
           </h2>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             aria-label="Close dialog"
             className="text-slate-500 hover:text-slate-700 p-1 cursor-pointer rounded-lg hover:bg-slate-100 transition-colors"
           >
             <X size={18} />
           </button>
         </div>
-        
+
         <form id="course-form" onSubmit={e => {
           e.preventDefault();
           if (!credits.trim() || !Number.isFinite(Number(credits)) || Number(credits) < 0 || Number(credits) > 30) return;
           handleSave(e);
         }} className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label htmlFor="course-code-input" className="text-xs font-bold text-slate-600 uppercase">Course Code *</label>
-            <input 
+            <label htmlFor="course-code-input" className="text-xs font-bold text-slate-600 uppercase">Subject or course code *</label>
+            <input
               id="course-code-input"
-              required 
-              type="text" 
-              value={course.course_code} 
-              onChange={e => setCourse({...course, course_code: e.target.value})} 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
-              placeholder="e.g. CPSC 310" 
+              required
+              type="text"
+              value={course.course_code}
+              onChange={e => setCourse({...course, course_code: e.target.value})}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+              placeholder="e.g. Grade 5 Mathematics or MATH 200"
               autoFocus
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="course-name-input" className="text-xs font-bold text-slate-600 uppercase">Course Name</label>
-            <input 
+            <label htmlFor="course-name-input" className="text-xs font-bold text-slate-600 uppercase">Full course name</label>
+            <input
               id="course-name-input"
-              type="text" 
-              value={course.course_name} 
-              onChange={e => setCourse({...course, course_name: e.target.value})} 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
-              placeholder="e.g. Intro to Software Eng" 
+              type="text"
+              value={course.course_name}
+              onChange={e => setCourse({...course, course_name: e.target.value})}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+              placeholder="e.g. Mathematics"
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="course-credits-input" className="text-xs font-bold text-slate-600 uppercase">Credits</label>
+            <label htmlFor="course-credits-input" className="text-xs font-bold text-slate-600 uppercase">Credits (use 0 if not applicable)</label>
             <input id="course-credits-input" type="number" min="0" max="30" step="any" required value={credits}
               onChange={e => {
                 setCredits(e.target.value);
@@ -115,24 +115,24 @@ function CourseModal({
           </div>
           <div className="space-y-1">
             <label htmlFor="course-instructor-input" className="text-xs font-bold text-slate-600 uppercase">Instructor</label>
-            <input 
+            <input
               id="course-instructor-input"
-              type="text" 
-              value={course.instructor} 
-              onChange={e => setCourse({...course, instructor: e.target.value})} 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
-              placeholder="e.g. Dr. Smith" 
+              type="text"
+              value={course.instructor}
+              onChange={e => setCourse({...course, instructor: e.target.value})}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+              placeholder="e.g. Dr. Smith"
             />
           </div>
           <div className="space-y-1">
             <label htmlFor="course-email-input" className="text-xs font-bold text-slate-600 uppercase">Instructor Email</label>
-            <input 
+            <input
               id="course-email-input"
-              type="email" 
-              value={course.instructor_email} 
-              onChange={e => setCourse({...course, instructor_email: e.target.value})} 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
-              placeholder="smith@ubc.ca" 
+              type="email"
+              value={course.instructor_email}
+              onChange={e => setCourse({...course, instructor_email: e.target.value})}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+              placeholder="teacher@example.com"
             />
           </div>
           <div className="space-y-1">
@@ -156,60 +156,60 @@ function CourseModal({
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <label htmlFor="course-start-date" className="text-xs font-bold text-slate-600 uppercase">Start Date</label>
-              <input 
+              <input
                 id="course-start-date"
-                type="date" 
-                value={course.start_date} 
-                onChange={e => setCourse({...course, start_date: e.target.value})} 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
+                type="date"
+                value={course.start_date}
+                onChange={e => setCourse({...course, start_date: e.target.value})}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
               />
             </div>
             <div className="space-y-1">
               <label htmlFor="course-end-date" className="text-xs font-bold text-slate-600 uppercase">End Date</label>
-              <input 
+              <input
                 id="course-end-date"
-                type="date" 
-                value={course.end_date} 
-                onChange={e => setCourse({...course, end_date: e.target.value})} 
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
+                type="date"
+                value={course.end_date}
+                onChange={e => setCourse({...course, end_date: e.target.value})}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
               />
             </div>
           </div>
           <div className="space-y-1 md:col-span-2">
             <label htmlFor="course-online-link" className="text-xs font-bold text-slate-600 uppercase">Online Class Link (Zoom/Teams)</label>
-            <input 
+            <input
               id="course-online-link"
-              type="url" 
-              value={course.online_links} 
-              onChange={e => setCourse({...course, online_links: e.target.value})} 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
-              placeholder="https://zoom.us/j/..." 
+              type="url"
+              value={course.online_links}
+              onChange={e => setCourse({...course, online_links: e.target.value})}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+              placeholder="https://zoom.us/j/..."
             />
           </div>
           <div className="space-y-1 md:col-span-2">
             <label htmlFor="course-outline-link" className="text-xs font-bold text-slate-600 uppercase">Course Outline/Syllabus URL</label>
-            <input 
+            <input
               id="course-outline-link"
-              type="url" 
-              value={course.outline_url} 
-              onChange={e => setCourse({...course, outline_url: e.target.value})} 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
-              placeholder="Link to Google Doc or PDF" 
+              type="url"
+              value={course.outline_url}
+              onChange={e => setCourse({...course, outline_url: e.target.value})}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+              placeholder="Link to Google Doc or PDF"
             />
           </div>
           <div className="space-y-1 md:col-span-2">
             <label htmlFor="course-other-links" className="text-xs font-bold text-slate-600 uppercase">Other Links (e.g. Piazza, Gradescope)</label>
-            <input 
+            <input
               id="course-other-links"
-              type="url" 
-              value={course.other_links} 
-              onChange={e => setCourse({...course, other_links: e.target.value})} 
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500" 
-              placeholder="https://piazza.com/..." 
+              type="url"
+              value={course.other_links}
+              onChange={e => setCourse({...course, other_links: e.target.value})}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+              placeholder="https://piazza.com/..."
             />
           </div>
         </form>
-        
+
         <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-2xl">
           <button type="button" onClick={onClose} className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer">
             Cancel
@@ -351,7 +351,7 @@ export default function CoursesList({ onNavigate }: { onNavigate?: (tab: any) =>
   return (
     <div className="space-y-6">
       {(error || contextError) && (
-        <div 
+        <div
           role="alert"
           aria-live="assertive"
           className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start justify-between gap-3 text-red-800 shadow-sm"
@@ -373,7 +373,7 @@ export default function CoursesList({ onNavigate }: { onNavigate?: (tab: any) =>
               </button>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => setError(null)}
             aria-label="Dismiss error"
             className="text-red-500 hover:text-red-800 p-1 rounded-lg hover:bg-red-100 transition-colors cursor-pointer"
@@ -382,10 +382,10 @@ export default function CoursesList({ onNavigate }: { onNavigate?: (tab: any) =>
           </button>
         </div>
       )}
-      
+
       <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <h2 className="font-bold text-slate-800 text-lg">Your courses</h2>
-        <button 
+        <button
           type="button"
           onClick={openNewForm}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
@@ -404,7 +404,7 @@ export default function CoursesList({ onNavigate }: { onNavigate?: (tab: any) =>
           onClick={() => openImport('syllabus')}
           className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline shrink-0 cursor-pointer"
         >
-          Add syllabus
+          Upload course outline
         </button>
       </div>
 
@@ -418,16 +418,16 @@ export default function CoursesList({ onNavigate }: { onNavigate?: (tab: any) =>
           return (
             <div key={course.id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group flex flex-col h-full">
               <div className={`absolute top-0 left-0 w-1 h-full ${getCourseColor(course.course_code).split(' ')[0].replace('100', '500').replace('50', '500')}`} />
-              
+
               <div className="flex justify-between items-start mb-3 pl-2">
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">{course.course_code}</h3>
                   <p className="text-sm font-medium text-slate-600">{course.course_name}</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button 
+                  <button
                     type="button"
-                    onClick={() => { setEditingCourse(course); setIsFormOpen(true); }} 
+                    onClick={() => { setEditingCourse(course); setIsFormOpen(true); }}
                     aria-label={`Edit ${course.course_code || 'course'}`}
                     className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
                     title="Edit"
@@ -486,7 +486,7 @@ export default function CoursesList({ onNavigate }: { onNavigate?: (tab: any) =>
 
               {pendingDeleteId === course.id && (
                 <InlineDeleteConfirm
-                  message={`Delete ${course.course_code}? This removes only its course details and grade weights. Its ${classes.filter(c => normalizeCourseCode(c.course_code) === normalizeCourseCode(course.course_code)).length} timetable classes, ${exams.filter(e => normalizeCourseCode(e.course_code) === normalizeCourseCode(course.course_code)).length} exams and ${tasks.filter(t => normalizeCourseCode(t.course) === normalizeCourseCode(course.course_code)).length} tasks are kept. Remove them separately in Timetable and Tasks; exam clash and hardship warnings remain until the exams are removed. Courses with remaining tasks may still appear as a course summary.`}
+                  message={`Delete ${course.course_code}? This removes only its course details and grade weights. Its ${classes.filter(c => normalizeCourseCode(c.course_code) === normalizeCourseCode(course.course_code)).length} timetable classes, ${exams.filter(e => normalizeCourseCode(e.course_code) === normalizeCourseCode(course.course_code)).length} exams and ${tasks.filter(t => normalizeCourseCode(t.course) === normalizeCourseCode(course.course_code)).length} tasks are kept. Remove them separately in Timetable and Tasks; exam clash warnings remain until the exams are removed. Courses with remaining tasks may still appear as a course summary.`}
                   busy={deletingCourse}
                   onConfirm={() => handleDelete(course.id)}
                   onCancel={() => {

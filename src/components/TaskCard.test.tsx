@@ -233,7 +233,7 @@ function runTaskCardTests() {
     assert(html.includes('rel="noopener noreferrer"'), 'External links isolate their opener');
   }
   for (const url of ['https://canvas.ubc.ca/courses/1', 'https://learn.ubc.ca/courses/1', 'https://ubc.instructure.com/courses/1']) {
-    assert(renderCard({canvas_url: url}).includes('Canvas · '), 'Allowlisted subdomains are labelled Canvas');
+    assert(renderCard({canvas_url: url}).includes('External · '), 'Institution domains are ordinary external links');
   }
   assert(!renderCard({canvas_url:'javascript:alert(1)'}).includes('href="javascript:'), 'Unsafe schemes remain blocked');
   simpleContext.now = new Date('2026-10-02T19:00:00Z');

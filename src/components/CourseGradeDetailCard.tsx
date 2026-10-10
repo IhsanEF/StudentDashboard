@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Course, Task, WhatIfOverridesMap } from '../types';
 import { calculateCourseGrade, calculateFinalExamRequirement } from '../services/gradeCalculatorService';
-import { getCourseColor, getUbcLetterGrade, isTaskAnnouncement, normalizeCourseCode } from '../utils';
+import { getCourseColor, isTaskAnnouncement, normalizeCourseCode } from '../utils';
 import { useTasksContext } from '../hooks/useTasks';
 import { hasConfirmedWeights } from '../services/courseState';
 import { useViewMode } from '../hooks/useViewMode';
 import CourseWeightingModal from './CourseWeightingModal';
-import { 
-  Sparkles, 
+import {
+  Sparkles,
   AlertCircle
 } from 'lucide-react';
 
@@ -119,7 +119,7 @@ export default function CourseGradeDetailCard({
   const handleResetWhatIfs = () => setWhatIfOverrides({});
 
   // Find final exam weight for final exam calculation algorithm
-  const finalCat = (course.grade_categories || []).find(c => c.name.toLowerCase().includes('final')) || 
+  const finalCat = (course.grade_categories || []).find(c => c.name.toLowerCase().includes('final')) ||
     displayResult.categories.find(c => c.category.name.toLowerCase().includes('final'));
   const confirmedFinal = hasConfirmedWeights(course) && Boolean(finalCat && finalCat.weight > 0);
   const finalExamWeight = finalCat && finalCat.weight > 0 ? finalCat.weight : 0;
@@ -163,13 +163,10 @@ export default function CourseGradeDetailCard({
     if (req === null || !Number.isFinite(req)) {
       return 'Add a grade to see what you need on the final.';
     }
-    const letter = calcResult.targetLetter || 'A-';
-    const article = ['A', 'E', 'I', 'O', 'U'].includes(letter.charAt(0)) ? 'an' : 'a';
-    return `You need ${req.toFixed(1)}% on the final for ${article} ${letter}.`;
+    return `You need ${req.toFixed(1)}% on the final to reach ${targetPercentage}% overall.`;
   }, [displayResult.currentGrade, calcResult, confirmedFinal]);
 
   const currentGradeDisplay = actualResult.currentGrade !== null ? actualResult.currentGrade.toFixed(1) : null;
-  const currentLetterGrade = actualResult.currentGrade !== null ? getUbcLetterGrade(Math.min(100, actualResult.currentGrade)) : '';
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-5 space-y-4">
@@ -209,7 +206,7 @@ export default function CourseGradeDetailCard({
               <div className="text-left sm:text-right">
                 <span title="Assumes 0% for categories without scores; includes what-if scores." className="text-[10px] uppercase font-bold tracking-wider text-blue-600 block leading-tight">What-If grade</span>
                 <span className="text-sm font-black text-blue-950">{whatIfResult.projectedGrade.toFixed(1)}%</span>
-                <span className="text-xs font-bold text-blue-700 ml-1">({getUbcLetterGrade(Math.min(100, whatIfResult.projectedGrade))})</span>
+
               </div>
             </div>
           )}
@@ -220,7 +217,7 @@ export default function CourseGradeDetailCard({
                 <span className="text-[10px] uppercase font-bold tracking-wider text-slate-600 block leading-tight">Grade So Far</span>
                 <div className="flex items-baseline gap-1.5 sm:justify-end">
                   <span className="text-xl font-black text-slate-900">{currentGradeDisplay}%</span>
-                  <span className="text-sm font-bold text-slate-600">({currentLetterGrade})</span>
+
                 </div>
               </div>
             ) : (

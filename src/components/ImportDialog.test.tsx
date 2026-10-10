@@ -126,6 +126,11 @@ function runImportDialogTests() {
   assert(openHtml.includes('id="smart-import-title"'), 'Heading has matching id');
   assert(openHtml.includes('Import coursework'), 'Dialog contains Import coursework title');
 
+  assert(!/Canvas|UBC|\.ics/i.test(openHtml), 'Default import has no school integration or calendar-feed upload');
+  assert(/\.pdf/.test(openHtml), 'Default import offers course document uploads');
+  const legacyHtml = renderToStaticMarkup(<TaskContext.Provider value={mockCtx}><SmartImportModal isOpen={true} onClose={() => {}} defaultTab="calendar" /></TaskContext.Provider>);
+  assert(!/Canvas|UBC|\.ics/i.test(legacyHtml) && /\.pdf/.test(legacyHtml), 'Legacy calendar entry opens document upload');
+
   console.log('✅ ALL IMPORT DIALOG DOM TESTS PASSED SUCCESSFULLY!');
 }
 

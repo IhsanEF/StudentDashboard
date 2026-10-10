@@ -7,15 +7,15 @@ import { useTasksContext } from '../hooks/useTasks';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { useViewMode } from '../hooks/useViewMode';
 import { getAuthHeader } from '../auth';
-import { 
-  X, 
-  Trash2, 
-  ListTree, 
-  Sparkles, 
-  Clock, 
-  Flame, 
-  AlertCircle, 
-  Check, 
+import {
+  X,
+  Trash2,
+  ListTree,
+  Sparkles,
+  Clock,
+  Flame,
+  AlertCircle,
+  Check,
   ChevronDown
 } from 'lucide-react';
 import TaskBreakdownModal from './TaskBreakdownModal';
@@ -43,9 +43,9 @@ export function validateDueDate(val?: string): { valid: boolean; error?: string 
   const trimmed = val.trim();
   const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?(.*)$/);
   if (!match) {
-    return { 
-      valid: false, 
-      error: 'Please enter a valid due date in YYYY-MM-DD or YYYY-MM-DDTHH:mm format (e.g. 2026-10-05T23:59).' 
+    return {
+      valid: false,
+      error: 'Please enter a valid due date in YYYY-MM-DD or YYYY-MM-DDTHH:mm format (e.g. 2026-10-05T23:59).'
     };
   }
   const year = parseInt(match[1], 10);
@@ -150,8 +150,8 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
     estimated_hours: undefined
   });
 
-  const parsedHours = typeof estimatedHours === 'number' 
-    ? estimatedHours 
+  const parsedHours = typeof estimatedHours === 'number'
+    ? estimatedHours
     : (String(estimatedHours).trim() === '' ? NaN : parseFloat(String(estimatedHours)));
 
   const hasExplicitHours = Number.isFinite(parsedHours) && parsedHours > 0;
@@ -213,7 +213,7 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
         setEstimatedHours(String(data.estimatedHours));
         setHoursEdited(true);
         const isAI = data.source === 'gemini_ai';
-        setAiEffortFeedback(isAI 
+        setAiEffortFeedback(isAI
           ? `✨ AI Estimate: ${data.explanation || `${data.estimatedHours}h suggested`}`
           : `Heuristic: ${data.explanation || `${data.estimatedHours}h suggested`}`
         );
@@ -319,7 +319,7 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
         updates.category_id = deleteField();
         updates.category_name = deleteField();
       }
-      
+
       const updatePromise = updateTask(task.task_id, updates);
       // If offline or network hangs, race against 500ms timeout so modal closes optimistically
       // instead of spinning indefinitely on 'Saving...' while changes persist to offline store.
@@ -370,7 +370,7 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
         className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in"
       >
         <div className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
-          
+
           {/* Modal Header */}
           <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
             <div>
@@ -389,7 +389,7 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
 
           {/* Modal Form Content */}
           <form id="edit-task-form" onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 text-sm flex-1">
-            
+
             {saveError && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start gap-2.5 text-red-700 text-xs font-semibold animate-in fade-in">
                 <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
@@ -397,13 +397,13 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
               </div>
             )}
 
-            {/* Canvas Date Diff Banner if exists */}
+            {/* Imported date Diff Banner if exists */}
             {task.canvas_date_diff && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                     <AlertCircle size={16} className="text-amber-600" />
-                    <span>Canvas Date Change Detected</span>
+                    <span>Imported date change</span>
                   </div>
                   <button
                     type="button"
@@ -411,11 +411,11 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
                     className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
                   >
                     <Check size={12} />
-                    <span>Apply Canvas Date</span>
+                    <span>Apply imported date</span>
                   </button>
                 </div>
                 <p className="text-xs text-amber-800">
-                  Canvas rescheduled this deadline from <strong>{formatReadableDate(task.canvas_date_diff.oldDueDate)}</strong> to <strong className="text-blue-700">{formatReadableDate(task.canvas_date_diff.newDueDate)}</strong>.
+                  An earlier import changed this deadline from <strong>{formatReadableDate(task.canvas_date_diff.oldDueDate)}</strong> to <strong className="text-blue-700">{formatReadableDate(task.canvas_date_diff.newDueDate)}</strong>.
                 </p>
               </div>
             )}
@@ -512,10 +512,10 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
                       </button>
                     </div>
 
-                    {/* Canvas link */}
+                    {/* Resource link */}
                     <div>
                       <label htmlFor="edit-task-url" className="text-xs font-bold text-slate-500 uppercase block mb-1">
-                        Canvas / Submission URL
+                        Resource / submission link
                       </label>
                       <input
                         id="edit-task-url"
@@ -523,7 +523,7 @@ export default function EditTaskModal({ task, isOpen, onClose }: EditTaskModalPr
                         value={canvasUrl}
                         onChange={e => setCanvasUrl(e.target.value)}
                         className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-blue-500 text-xs"
-                        placeholder="https://canvas.ubc.ca/..."
+                        placeholder="https://example.com/assignment"
                       />
                     </div>
 

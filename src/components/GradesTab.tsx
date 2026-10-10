@@ -3,17 +3,16 @@ import { useTasksContext } from '../hooks/useTasks';
 import { useViewMode } from '../hooks/useViewMode';
 import { Course, Task } from '../types';
 import CourseGradeDetailCard from './CourseGradeDetailCard';
-import UbcGpaConverter from './UbcGpaConverter';
 import FinalExamCalculatorCard from './FinalExamCalculatorCard';
 import EditTaskModal from './EditTaskModal';
 import { calculateCourseGrade } from '../services/gradeCalculatorService';
-import { getCourseColor, getUbcLetterGrade, normalizeCourseCode, isTaskAnnouncement, cn } from '../utils';
+import { getCourseColor, normalizeCourseCode, isTaskAnnouncement, cn } from '../utils';
 import { hasConfirmedWeights } from '../services/courseState';
-import { 
-  Award, 
-  Edit3, 
-  Plus, 
-  Clock, 
+import {
+  Award,
+  Edit3,
+  Plus,
+  Clock,
   BookOpen,
   ChevronDown
 } from 'lucide-react';
@@ -26,7 +25,7 @@ export interface GradesTabProps {
 const normalizeSubView = (subView?: string): 'calculator' | 'gpa' | 'history' => {
   if (!subView) return 'calculator';
   const lower = subView.toLowerCase();
-  if (lower.includes('gpa')) return 'gpa';
+  if (lower.includes('gpa')) return 'calculator';
   if (lower.includes('history') || lower.includes('work') || lower.includes('graded')) return 'history';
   return 'calculator';
 };
@@ -43,7 +42,7 @@ export default function GradesTab({
   );
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
   const [activeOptionalTool, setActiveOptionalTool] = useState<'what-if' | 'final-exam' | 'gpa' | null>(() => {
-    if (initialSubView === 'gpa') return 'gpa';
+    if (initialSubView === 'gpa') return null;
     return null;
   });
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
@@ -54,7 +53,7 @@ export default function GradesTab({
     if (initialSubView) {
       setActiveSubView(normalizeSubView(initialSubView));
       if (initialSubView === 'gpa') {
-        setActiveOptionalTool('gpa');
+        setActiveOptionalTool(null);
       }
     }
   }, [initialSubView]);
@@ -72,9 +71,7 @@ export default function GradesTab({
       c.id !== 'course-2' &&
       c.id !== 'course-3' &&
       !c.id?.startsWith('sample-') &&
-      !c.id?.startsWith('fictional-') &&
-      c.instructor_email !== 'rholmes@cs.ubc.ca' &&
-      c.instructor_email !== 'wetton@math.ubc.ca'
+      !c.id?.startsWith('fictional-')
     );
   }, [courses, isDemoMode]);
 
@@ -258,7 +255,7 @@ export default function GradesTab({
                   <span>
                     <span className="font-semibold text-slate-900">Weighted course average: </span>
                     <span className="font-bold text-slate-900 text-base">{overallAverage.toFixed(1)}%</span>{' '}
-                    <span className="font-bold text-slate-800">({getUbcLetterGrade(overallAverage)})</span>
+
                   </span>
                   <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                     syllabus-weighted across {coursesWithGrades.length} graded {coursesWithGrades.length === 1 ? 'course' : 'courses'}
@@ -309,19 +306,7 @@ export default function GradesTab({
             >
               By course <span className="sr-only">Standing & Calculator</span>
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={effectiveSubView === 'gpa'}
-              onClick={() => setActiveSubView('gpa')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                effectiveSubView === 'gpa'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              GPA <span className="sr-only">UBC GPA Converter</span>
-            </button>
+
             <button
               type="button"
               role="tab"
@@ -341,7 +326,7 @@ export default function GradesTab({
 
       {gradedTasks.length === 0 && (
         <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-          <p className="text-sm text-slate-600">No grades yet. Add a score on any task, paste a Canvas grade email into Smart Import, or upload a syllabus so we know how each course is weighted.</p>
+          <p className="text-sm text-slate-600">No grades yet. Enter a score on a task or upload a course outline to add grading weights.</p>
           <button type="button" onClick={() => openImport('syllabus')}
             className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold">Upload syllabus</button>
         </div>
@@ -363,7 +348,7 @@ export default function GradesTab({
 
                 return (
                   <div key={course.id || course.course_code} className="hover:bg-slate-50/50 transition-colors">
-                    <div 
+                    <div
                       className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none"
                       onClick={() => setExpandedCourseId(prev => prev === (course.id || course.course_code) ? null : (course.id || course.course_code))}
                       role="button"
@@ -399,8 +384,8 @@ export default function GradesTab({
                         <div className="text-right">
                           <span className="text-[10px] text-slate-600 uppercase tracking-wider block font-semibold">Grade so far</span>
                           <span className="text-sm font-bold text-slate-900">
-                            {currentGrade !== null 
-                              ? `${currentGrade.toFixed(1)}% (${getUbcLetterGrade(currentGrade)})`
+                            {currentGrade !== null
+                              ? `${currentGrade.toFixed(1)}%`
                               : 'No grades'}
                           </span>
                         </div>
@@ -448,7 +433,7 @@ export default function GradesTab({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Optional tools</h3>
-                  <p className="text-xs text-slate-500">Projections, final exam requirements, and GPA calculation.</p>
+                  <p className="text-xs text-slate-500">Try out scores and calculate what you need on a final exam.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -477,19 +462,7 @@ export default function GradesTab({
                   >
                     Final Exam Calculator
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveOptionalTool(prev => prev === 'gpa' ? null : 'gpa')}
-                    aria-expanded={activeOptionalTool === 'gpa'}
-                    className={cn(
-                      "px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[36px]",
-                      activeOptionalTool === 'gpa'
-                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-                    )}
-                  >
-                    GPA Converter
-                  </button>
+
                 </div>
               </div>
 
@@ -538,7 +511,7 @@ export default function GradesTab({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                     <div>
                       <h4 className="font-bold text-slate-900 text-sm">Target Final Exam Calculator</h4>
-                      <p className="text-xs text-slate-500">Calculate the exact score needed on your final exam to achieve your target letter grade.</p>
+                      <p className="text-xs text-slate-500">Calculate the exact score needed on your final exam to achieve your target percentage.</p>
                     </div>
                     {effectiveCourses.length > 1 && (
                       <div className="flex items-center gap-2">
@@ -579,21 +552,9 @@ export default function GradesTab({
                 </div>
               )}
 
-              {activeOptionalTool === 'gpa' && (
-                <div className="p-4 sm:p-5 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-4 animate-in fade-in duration-150">
-                  <div className="border-b border-slate-100 pb-3">
-                    <h4 className="font-bold text-slate-900 text-sm">UBC GPA Converter</h4>
-                    <p className="text-xs text-slate-500">Convert percentage grades using common 4.33 and OMSAS conventions.</p>
-                  </div>
-                  <UbcGpaConverter courseResults={courseResults} />
-                </div>
-              )}
+
             </div>
           )}
-        </div>
-      ) : effectiveSubView === 'gpa' ? (
-        <div className="space-y-6 animate-in fade-in">
-          <UbcGpaConverter courseResults={courseResults} />
         </div>
       ) : (
         /* Graded Assignments Grid (Detailed mode subview) */
@@ -611,7 +572,7 @@ export default function GradesTab({
               const possible = task.points_possible ? parseFloat(task.points_possible) : NaN;
               const hasValidNumbers = !Number.isNaN(earned) && !Number.isNaN(possible) && Number.isFinite(earned) && Number.isFinite(possible);
               const percentage = (hasValidNumbers && possible > 0)
-                ? Math.round((earned / possible) * 100) 
+                ? Math.round((earned / possible) * 100)
                 : null;
 
               return (
@@ -636,7 +597,7 @@ export default function GradesTab({
                       </div>
                     </div>
                     <h4 className="font-bold text-slate-900 mb-3 line-clamp-1">{task.title}</h4>
-                    
+
                     <div className="flex items-baseline gap-2 mb-3">
                       {task.grade_text ? (
                         <span className="text-3xl font-black text-slate-800">{task.grade_text}</span>
@@ -645,7 +606,7 @@ export default function GradesTab({
                       ) : (
                         <span className="text-lg font-bold text-slate-800">Graded</span>
                       )}
-                      
+
                       {hasValidNumbers && (
                         <span className="text-sm font-semibold text-slate-500">
                           {task.points_earned} / {task.points_possible} pts

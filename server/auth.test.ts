@@ -14,18 +14,21 @@ const authCode = source.statements.filter(n => ts.isVariableStatement(n) &&
   n.declarationList.declarations.some(d => ['requireAuth', 'requireFreshAuth'].includes(d.name.getText(source))))
   .map(n => n.getText(source)).join('\n');
 let security = '';
+let retiredFeedRoute = '';
 function visit(n: ts.Node) {
   if (ts.isCallExpression(n) && n.expression.getText(source) === 'app.use' &&
     n.arguments[0]?.getText(source).startsWith('helmet(')) security = n.getText(source);
+  if (ts.isCallExpression(n) && n.expression.getText(source) === 'app.post' &&
+    n.arguments[0]?.getText(source) === "'/api/parse/ics'") retiredFeedRoute = n.getText(source);
   ts.forEachChild(n, visit);
 }
 visit(source);
-assert.ok(authCode && security);
+assert.ok(authCode && security && retiredFeedRoute);
 const app = express();
 const verifications: any[] = [];
 let token: any = {};
 let invalidToken = false;
-const code = await transform(`${authCode}\n${security};\napp.get('/normal', requireAuth, (_req, res) => res.sendStatus(204));
+const code = await transform(`${authCode}\n${security};\n${retiredFeedRoute};\napp.get('/normal', requireAuth, (_req, res) => res.sendStatus(204));
 app.get('/fresh', requireFreshAuth, (_req, res) => res.sendStatus(204));`, { loader: 'ts' });
 runInNewContext(code.code, {
   app, helmet, process: { env: { NODE_ENV: 'production' } }, console: { error() {} },
@@ -39,6 +42,10 @@ const server = app.listen(0, '127.0.0.1');
 await new Promise<void>(resolve => server.once('listening', resolve));
 try {
   const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  const retired = await fetch(origin + '/api/parse/ics', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: 'http://127.0.0.1/private' }) });
+  assert.equal(retired.status, 410);
+  assert.match((await retired.json()).error, /removed/i);
+  assert.equal(verifications.length, 0, 'Retired feed route never connects to Firebase or a remote feed');
   for (const route of ['/normal', '/fresh']) {
     assert.equal((await fetch(origin + route)).status, 401);
     for (const provider of ['google.com', 'password', 'anonymous', 'custom', undefined]) {

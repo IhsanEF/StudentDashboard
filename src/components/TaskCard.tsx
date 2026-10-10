@@ -4,10 +4,10 @@ import { getTaskUrgencyColor, formatVancouverDate, isTaskSnoozed, sanitizeCanvas
 import { useTasksContext } from '../hooks/useTasks';
 import { useViewMode } from '../hooks/useViewMode';
 import CardMenu from './CardMenu';
-import { 
-  ChevronRight, 
-  AlertCircle, 
-  Moon, 
+import {
+  ChevronRight,
+  AlertCircle,
+  Moon,
   Award,
   ListTree,
   CheckCircle2,
@@ -42,7 +42,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
   const isTeal = urgencyClass.includes('teal');
   const isAmber = urgencyClass.includes('amber');
   const isSnoozed = isTaskSnoozed(task);
-  
+
   const handleAction = async (action: string) => {
     const prevStatus = task.status || 'Not Started';
     const prevCheckAgainAt = task.check_again_at || '';
@@ -149,7 +149,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
   const handleToggleSubtask = async (subtaskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!task.subtasks) return;
-    const updatedSubtasks = task.subtasks.map(st => 
+    const updatedSubtasks = task.subtasks.map(st =>
       st.id === subtaskId ? { ...st, done: !st.done } : st
     );
 
@@ -182,7 +182,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
   let badgeBg = 'bg-slate-100';
   let badgeText = 'text-slate-700';
   let accentText = 'text-slate-700';
-  
+
   if (isRed) { cardBg = 'bg-[#fff5f5]'; cardBorder = 'border-red-100'; leftBar = 'bg-red-500'; badgeBg = 'bg-red-100'; badgeText = 'text-red-800'; accentText = 'text-red-800'; }
   else if (isOrange) { cardBg = 'bg-[#fffcf5]'; cardBorder = 'border-orange-100'; leftBar = 'bg-orange-500'; badgeBg = 'bg-orange-100'; badgeText = 'text-orange-800'; accentText = 'text-orange-800'; }
   else if (isBlue) { cardBg = 'bg-[#f5f8ff]'; cardBorder = 'border-blue-100'; leftBar = 'bg-blue-500'; badgeBg = 'bg-blue-100'; badgeText = 'text-blue-800'; accentText = 'text-blue-800'; }
@@ -232,7 +232,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
       const isWebLink = parsed.protocol === 'https:' || parsed.protocol === 'http:';
       hasValidCanvasPath = isWebLink && parsed.pathname.length > 1;
       destinationHost = isWebLink ? parsed.hostname : '';
-      isExternalHost = Boolean(destinationHost) && !(destinationHost === 'canvas.ubc.ca' || destinationHost.endsWith('.ubc.ca') || destinationHost.endsWith('.instructure.com'));
+      isExternalHost = Boolean(destinationHost);
     } catch {
       hasValidCanvasPath = false;
     }
@@ -254,7 +254,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
     <>
       <div className={`${cardBg} ${cardBorder} border p-5 rounded-2xl relative overflow-hidden flex flex-col h-full shadow-sm hover:shadow-md transition-shadow group`}>
         <div className={`absolute top-0 left-0 w-1 h-full ${leftBar}`}></div>
-        
+
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`px-2 py-1 ${badgeBg} ${badgeText} text-xs font-bold rounded uppercase`}>
@@ -272,7 +272,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
             )}
             {/* Estimated Effort Hours - hidden in Simple mode */}
             {!isSimple && (
-              <span 
+              <span
                 title="Estimated effort"
                 className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold rounded"
               >
@@ -306,27 +306,27 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
               </span>
             )}
             {task.is_syllabus_only && (
-              <span 
-                title="This task was extracted from your course syllabus and may not appear on Canvas"
+              <span
+                title="This task was extracted from your course syllabus and was added from a course outline"
                 className="inline-flex items-center gap-0.5 px-2 py-1 bg-sky-50 text-sky-900 border border-sky-200 text-xs font-semibold rounded"
               >
-                Not on Canvas
+                From course outline
               </span>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
               {task.course}
             </span>
           </div>
         </div>
-        
+
         {/* Title: link only if Canvas URL points at a real page */}
         {hasValidCanvasPath ? (
           <a
             href={sanitizedCanvasUrl}
-            title={`${isExternalHost ? 'External' : 'Canvas'}: ${destinationHost}`}
+            title={`${isExternalHost ? 'External' : 'Resource'}: ${destinationHost}`}
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold text-slate-800 hover:text-blue-600 transition-colors line-clamp-1 mb-1 block"
@@ -338,11 +338,11 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
             {task.title}
           </h4>
         )}
-        
+
         {destinationHost && (
           <a href={sanitizedCanvasUrl} target="_blank" rel="noopener noreferrer"
             title={`Destination: ${destinationHost}`} className="text-xs text-blue-700 hover:underline mb-2 break-all">
-            {isExternalHost ? 'External' : 'Canvas'} · {destinationHost}
+            {isExternalHost ? 'External' : 'Resource'} · {destinationHost}
           </a>
         )}
 
@@ -359,13 +359,13 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
           </p>
         )}
 
-        {/* Canvas Date Conflict Alert Pill */}
+        {/* Imported date Conflict Alert Pill */}
         {task.canvas_date_diff && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-3 flex items-start justify-between gap-2 text-xs">
             <div className="flex items-start gap-1.5 text-amber-950">
               <CalendarClock size={16} className="text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold block text-amber-950">Canvas date changed</span>
+                <span className="font-bold block text-amber-950">Imported date changed</span>
                 <span className="text-xs text-amber-900">
                   New: {formatVancouverDate(task.canvas_date_diff.newDueDate)}
                 </span>
@@ -386,7 +386,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-lg mb-3 w-fit">
             <Award size={14} />
             <span>
-              {task.grade_text ? task.grade_text : ''} 
+              {task.grade_text ? task.grade_text : ''}
               {task.points_earned && task.points_possible ? ` (${task.points_earned}/${task.points_possible} pts)` : ''}
             </span>
           </div>
@@ -442,7 +442,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
 
                 {/* Progress bar */}
                 <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="bg-indigo-600 h-full rounded-full transition-all duration-300"
                     style={{ width: `${subtaskProgressPercent}%` }}
                   />
@@ -451,12 +451,12 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
                 {/* Collapsible checklist items */}
                 <div className="pt-2 space-y-2 border-t border-slate-200/60 animate-in fade-in">
                   {subtasksList.map((st) => (
-                    <div 
+                    <div
                       key={st.id}
                       onClick={(e) => handleToggleSubtask(st.id, e)}
                       className="flex items-start gap-2.5 text-xs p-2 rounded-lg hover:bg-white transition-colors cursor-pointer group/step min-h-[36px]"
                     >
-                      <button 
+                      <button
                         type="button"
                         className="mt-0.5 p-2.5 -m-2 text-slate-500 hover:text-emerald-700 shrink-0 cursor-pointer min-w-[24px] min-h-[24px] flex items-center justify-center"
                         aria-label={st.done ? `Mark "${st.title}" incomplete` : `Mark "${st.title}" complete`}
@@ -522,9 +522,9 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
             </div>
           )}
           <div className="flex items-center gap-1.5">
-            <div 
-              role="group" 
-              aria-label="Task status" 
+            <div
+              role="group"
+              aria-label="Task status"
               className="grid grid-cols-4 gap-1 flex-1 bg-slate-100 p-1 rounded-lg border border-slate-200"
             >
               <button
@@ -600,10 +600,10 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
       {modalOpen && <ProgressModal task={task} onClose={() => setModalOpen(false)} />}
       {editModalOpen && <EditTaskModal task={task} isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} />}
       {breakdownModalOpen && (
-        <TaskBreakdownModal 
-          task={task} 
-          isOpen={breakdownModalOpen} 
-          onClose={() => setBreakdownModalOpen(false)} 
+        <TaskBreakdownModal
+          task={task}
+          isOpen={breakdownModalOpen}
+          onClose={() => setBreakdownModalOpen(false)}
         />
       )}
     </>

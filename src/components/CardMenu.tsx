@@ -133,7 +133,7 @@ export function getCardMenuItems(
   if (hasValidCanvasPath) {
     items.push({
       key: 'open-canvas',
-      label: `${isTrustedCanvasHost(getUrlHostname(sanitizedCanvasUrl)) ? 'Open in Canvas' : 'Open external link'} · ${getUrlHostname(sanitizedCanvasUrl)}`,
+      label: `Open resource link · ${getUrlHostname(sanitizedCanvasUrl)}`,
       icon: ExternalLink,
       onClick: () => {
         if (callbacks.onOpenCanvas) {

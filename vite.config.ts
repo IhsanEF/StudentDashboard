@@ -38,9 +38,9 @@ export default defineConfig(() => {
         includeManifestIcons: false,
         manifest: {
           id: '/',
-          name: 'UBC Student Dashboard',
-          short_name: 'UBC Dash',
-          description: 'A responsive student dashboard with AI-powered calendar, screenshot, camera, and syllabus import for Canvas coursework.',
+          name: 'My LMS',
+          short_name: 'My LMS',
+          description: 'Plan subjects, assignments, grades, and study time at any education level. Add coursework manually or upload course outlines.',
           theme_color: '#002145',
           background_color: '#002145',
           display: 'standalone',

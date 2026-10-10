@@ -38,12 +38,12 @@ assert.strictEqual(normalized.member_details['user-2'].displayName, 'Bob Smith')
 // user-3 had null, should be safely synthesized for member list consistency
 assert(normalized.member_details['user-3'], 'user-3 should be synthesized');
 assert.strictEqual(normalized.member_details['user-3'].uid, 'user-3');
-assert.strictEqual(normalized.member_details['user-3'].displayName, 'UBC Student');
+assert.strictEqual(normalized.member_details['user-3'].displayName, 'Student');
 
 // user-4 was in members array but missing from member_details, should be synthesized
 assert(normalized.member_details['user-4'], 'user-4 should be synthesized');
 assert.strictEqual(normalized.member_details['user-4'].uid, 'user-4');
-assert.strictEqual(normalized.member_details['user-4'].displayName, 'UBC Student');
+assert.strictEqual(normalized.member_details['user-4'].displayName, 'Student');
 
 // Malformed non-object / ghost entries should be dropped
 assert.strictEqual(normalized.member_details['user-invalid-1'], undefined, 'user-invalid-1 should be dropped');

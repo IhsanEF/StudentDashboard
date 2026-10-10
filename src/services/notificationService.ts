@@ -4,7 +4,7 @@ import { formatInTimeZone, toDate, TIMEZONE, parseLocalDate, isTaskAnnouncement,
 // Helper to check if current Vancouver time is within quiet hours
 export function isQuietHoursActive(quietHours: NotificationPrefs['quietHours'], now: Date = new Date()): boolean {
   if (!quietHours?.enabled) return false;
-  
+
   try {
     const vancouverTimeStr = formatInTimeZone(now, TIMEZONE, 'HH:mm');
     const [currH, currM] = vancouverTimeStr.split(':').map(Number);
@@ -31,7 +31,7 @@ export function isQuietHoursActive(quietHours: NotificationPrefs['quietHours'], 
 export function getQuietHoursEnd(quietHours: NotificationPrefs['quietHours'], now: Date = new Date()): Date {
   const [startH, startM] = (quietHours?.start || '23:00').split(':').map(Number);
   const [endH, endM] = (quietHours?.end || '08:00').split(':').map(Number);
-  
+
   const vancouverTimeStr = formatInTimeZone(now, TIMEZONE, 'HH:mm');
   const [currH, currM] = vancouverTimeStr.split(':').map(Number);
   const currentMinutes = currH * 60 + currM;
@@ -82,9 +82,9 @@ export function getCalendarDayDiff(now: Date, dueDate: Date): number {
 
 // Format actual real remaining time rather than static configured lead (V3-033, V3-042, V3-047)
 export function formatRealRemainingTimeText(
-  diffMinutes: number, 
-  isDateOnlyTask: boolean, 
-  dueDate: Date, 
+  diffMinutes: number,
+  isDateOnlyTask: boolean,
+  dueDate: Date,
   now: Date
 ): { text: string; timeSuffix: string } {
   if (isDateOnlyTask) {
@@ -308,8 +308,8 @@ export interface BrowserNotificationOptions {
 
 // Trigger native browser notification via Service Worker (Android Chrome safe) or window fallback (V3-045)
 export async function showBrowserNotification(
-  title: string, 
-  body: string, 
+  title: string,
+  body: string,
   options: BrowserNotificationOptions | (() => void) = {}
 ) {
   if (typeof window === 'undefined' || !('Notification' in window)) return;
@@ -457,12 +457,12 @@ export function evaluateNotifications({
       const isDateOnlyTask = isDateOnly(def.task.due_at);
       const diffMinutes = Math.max(1, Math.floor(def.diffMs / 60000));
       const { text: remainingText, timeSuffix } = formatRealRemainingTimeText(
-        diffMinutes, 
-        isDateOnlyTask, 
-        def.dueDate, 
+        diffMinutes,
+        isDateOnlyTask,
+        def.dueDate,
         now
       );
-      
+
       const notifTitle = `⏰ ${def.task.course || 'Course'} Deadline: ${def.task.title}`;
       const notifBody = `${remainingText} ${timeSuffix}. Tap to review details.`;
 
@@ -616,12 +616,12 @@ export function evaluateNotifications({
 
       // Compute body text from the actual remaining time (V3-033, V3-042, V3-047)
       const { text: remainingText, timeSuffix } = formatRealRemainingTimeText(
-        cand.diffMinutes, 
-        cand.isDateOnlyTask, 
-        cand.dueDate, 
+        cand.diffMinutes,
+        cand.isDateOnlyTask,
+        cand.dueDate,
         now
       );
-      
+
       const notifTitle = `⏰ ${cand.task.course || 'Course'} Deadline: ${cand.task.title}`;
       const notifBody = `${remainingText} ${timeSuffix}. Tap to review details.`;
 
@@ -746,7 +746,7 @@ export function generateDigestPreview(type: 'daily' | 'weekly', tasks: Task[], n
 
     return {
       title: `☀️ Morning Briefing: Due Today (${formattedToday})`,
-      subject: `[UBC Dashboard] Daily Digest: ${dailyTasks.length} Deadline${dailyTasks.length === 1 ? '' : 's'} Due Today`,
+      subject: `[My LMSboard] Daily Digest: ${dailyTasks.length} Deadline${dailyTasks.length === 1 ? '' : 's'} Due Today`,
       periodLabel: `Today (${formattedToday})`,
       count: dailyTasks.length,
       tasks: dailyTasks,
@@ -768,7 +768,7 @@ export function generateDigestPreview(type: 'daily' | 'weekly', tasks: Task[], n
 
     return {
       title: `📅 Sunday Week Ahead: Upcoming Schedule`,
-      subject: `[UBC Dashboard] Week Ahead: ${weeklyTasks.length} Task${weeklyTasks.length === 1 ? '' : 's'} This Week`,
+      subject: `[My LMSboard] Week Ahead: ${weeklyTasks.length} Task${weeklyTasks.length === 1 ? '' : 's'} This Week`,
       periodLabel: `Next 7 Days (Vancouver Time)`,
       count: weeklyTasks.length,
       tasks: weeklyTasks,

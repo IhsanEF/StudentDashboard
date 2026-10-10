@@ -3,15 +3,15 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { FieldValue } from 'firebase/firestore';
 import { TaskContext, TaskContextType, ToastItem, ImportTabType } from './hooks/useTasks';
 import { FocusClockProvider } from './hooks/useFocusTimer';
-import { 
-  Task, 
-  Course, 
-  AppUser, 
-  NotificationPrefs, 
-  InAppNotification, 
-  DEFAULT_NOTIFICATION_PREFS, 
-  ClassScheduleItem, 
-  ExamItem, 
+import {
+  Task,
+  Course,
+  AppUser,
+  NotificationPrefs,
+  InAppNotification,
+  DEFAULT_NOTIFICATION_PREFS,
+  ClassScheduleItem,
+  ExamItem,
   DashboardBackupSnapshot,
   GroupProject,
   GroupTask,
@@ -48,9 +48,9 @@ export function validateCanvasFeedUrl(urlStr?: string): { valid: boolean; error?
       return { valid: false, error: 'Canvas calendar feed URL must use HTTPS (https://...)' };
     }
     const host = parsed.hostname.toLowerCase();
-    const isCanvasHost = 
-      host === 'canvas.ubc.ca' || 
-      host.endsWith('.instructure.com') || 
+    const isCanvasHost =
+      host === 'canvas.ubc.ca' ||
+      host.endsWith('.instructure.com') ||
       host.includes('canvas.');
     if (!isCanvasHost) {
       return { valid: false, error: 'Feed URL must be from Canvas (e.g. canvas.ubc.ca or *.instructure.com)' };
@@ -58,9 +58,9 @@ export function validateCanvasFeedUrl(urlStr?: string): { valid: boolean; error?
     const path = parsed.pathname.toLowerCase();
     const hasIcs = path.endsWith('.ics') || parsed.pathname.toLowerCase().includes('/feeds/calendars/');
     if (!hasIcs) {
-      return { 
-        valid: false, 
-        error: 'Paste the Canvas "Calendar Feed" link (.ics), not the Canvas calendar web page. Find it at Canvas > Calendar > Calendar Feed.' 
+      return {
+        valid: false,
+        error: 'Paste the Canvas "Calendar Feed" link (.ics), not the Canvas calendar web page. Find it at Canvas > Calendar > Calendar Feed.'
       };
     }
     return { valid: true };
@@ -138,7 +138,7 @@ export function parseValidFocusTimer(raw: any, expectedUserId?: string): ActiveF
 }
 
 /**
- * V4-112: Restricts Canvas calendar events to a date window (past 30 days .. +1 year),
+ * V4-112: Restricts Sample assignments to a date window (past 30 days .. +1 year),
  * caps the total evaluated events (e.g. 500), and caps new imported items per sync (e.g. 100).
  */
 export function filterAndCapCanvasEvents(
@@ -250,18 +250,18 @@ export function sanitizeNotificationPrefsForImport(
   });
 }
 import { playFocusCompletionChime } from './utils/audioChime';
-import { 
-  syncUserProfile, 
+import {
+  syncUserProfile,
   cleanForFirestore,
   normalizeTask,
   normalizeCourse,
   normalizeClassScheduleItem,
   normalizeExamItem,
-  subscribeToTasks, 
+  subscribeToTasks,
   fetchUserTasks,
   fetchUserCourses,
-  updateFirestoreTask, 
-  addFirestoreTask, 
+  updateFirestoreTask,
+  addFirestoreTask,
   batchImportTasksAndCourses,
   deleteFirestoreTask,
   fetchUserNotificationPrefs,
@@ -298,7 +298,6 @@ import {
   formatLeadTimeText,
   generateDigestPreview
 } from './services/notificationService';
-import { fetchAndSyncCanvasFeed } from './services/calendarSyncService';
 import { auth } from './auth';
 
 export const FICTIONAL_SAMPLE_COURSES: Course[] = INITIAL_SAMPLE_COURSES.map(c => ({
@@ -306,9 +305,9 @@ export const FICTIONAL_SAMPLE_COURSES: Course[] = INITIAL_SAMPLE_COURSES.map(c =
   instructor: c.course_code === 'CPSC 310' ? 'Prof. Alex Taylor (Sample)' :
               c.course_code === 'MATH 200' ? 'Prof. Morgan Lee (Sample)' :
               'Prof. Jordan Smith (Sample)',
-  instructor_email: c.course_code === 'CPSC 310' ? 'taylor.sample@example.ubc.ca' :
-                    c.course_code === 'MATH 200' ? 'lee.sample@example.ubc.ca' :
-                    'smith.sample@example.ubc.ca'
+  instructor_email: c.course_code === 'CPSC 310' ? 'taylor.sample@example.com' :
+                    c.course_code === 'MATH 200' ? 'lee.sample@example.com' :
+                    'smith.sample@example.com'
 }));
 
 export function mergeById<T>(existing: T[], incoming: T[], getId: (item: T) => string): T[] {
@@ -350,15 +349,15 @@ export function normalizeBackupSnapshot(snapshot: DashboardBackupSnapshot): Dash
   };
 }
 
-export function TaskProvider({ 
-  children, 
-  user, 
+export function TaskProvider({
+  children,
+  user,
   initialDemoMode = false,
   onLogout,
   onDemoSignIn
-}: { 
-  children: React.ReactNode, 
-  user: AppUser | null, 
+}: {
+  children: React.ReactNode,
+  user: AppUser | null,
   initialDemoMode?: boolean,
   onLogout: () => void,
   onDemoSignIn?: (user: AppUser) => void
@@ -723,209 +722,10 @@ export function TaskProvider({
     return () => clearInterval(interval);
   }, [tasks, notificationPrefs, currentUserId, notifications, isDemoMode, user?.uid, prefsLoaded, loading]);
 
-  // Periodic background check for Canvas calendar feed changes (if configured)
-  const savedCalendarFeedUrl = notificationPrefs.savedCalendarFeedUrl;
-  const autoSyncCalendar = notificationPrefs.autoSyncCalendar;
-  const lastCalendarSync = notificationPrefs.lastCalendarSync;
-  const lastCalendarAttempt = notificationPrefs.lastCalendarAttempt;
-
+  // Legacy feed settings remain in saved profiles for compatibility, but feeds
+  // are no longer fetched or polled. Keep preferences available to other tools.
   const notificationPrefsRef = useRef(notificationPrefs);
-  useEffect(() => {
-    notificationPrefsRef.current = notificationPrefs;
-  }, [notificationPrefs]);
-
-  const lastCalendarAttemptRef = useRef(lastCalendarAttempt);
-  useEffect(() => {
-    lastCalendarAttemptRef.current = lastCalendarAttempt;
-  }, [lastCalendarAttempt]);
-
-  const prevFeedUrlRef = useRef(savedCalendarFeedUrl);
-
-  useEffect(() => {
-    if (isDemoMode || !user?.uid) return;
-    const feedUrl = savedCalendarFeedUrl;
-    const autoSync = autoSyncCalendar ?? true;
-    if (!feedUrl || !autoSync) return;
-
-    const urlChanged = prevFeedUrlRef.current !== feedUrl;
-    prevFeedUrlRef.current = feedUrl;
-
-    const checkFeed = async (force: boolean = false) => {
-      if (!hasLoadedTasksRef.current || isDemoMode || !user?.uid) return;
-      const attemptIso = new Date().toISOString();
-
-      // Validate feed URL on entry before firing request
-      const validation = validateCanvasFeedUrl(feedUrl);
-      if (!validation.valid) {
-        const errorMsg = validation.error || 'Invalid Canvas feed URL';
-        console.warn('Canvas feed validation failed:', errorMsg);
-        setNotificationPrefs(prev => ({
-          ...prev,
-          lastCalendarAttempt: attemptIso,
-          lastCalendarSyncError: errorMsg
-        }));
-        const failPrefs: NotificationPrefs = {
-          ...notificationPrefsRef.current,
-          lastCalendarAttempt: attemptIso,
-          lastCalendarSyncError: errorMsg
-        };
-        notificationPrefsRef.current = failPrefs;
-        await updateUserNotificationPrefs(user.uid, failPrefs);
-
-        // Notify student so they know why automatic sync is not working
-        const notifId = `canvas_val_err_${Date.now()}`;
-        setNotifications(prev => {
-          if (prev.some(n => n.id.startsWith('canvas_val_err_'))) return prev;
-          return [{
-            id: notifId,
-            type: 'canvas_sync',
-            title: '⚠️ Canvas Calendar URL Invalid',
-            body: errorMsg,
-            createdAt: new Date().toISOString(),
-            read: false
-          }, ...prev];
-        });
-        return;
-      }
-
-      try {
-        if (!force) {
-          const lastAttempt = lastCalendarAttemptRef.current || lastCalendarSync;
-          if (lastAttempt) {
-            const hoursSinceLast = (Date.now() - new Date(lastAttempt).getTime()) / (1000 * 60 * 60);
-            if (hoursSinceLast < 24) return; // Only sync once every 24 hours
-          }
-        }
-
-        lastCalendarAttemptRef.current = attemptIso;
-        setNotificationPrefs(prev => ({
-          ...prev,
-          lastCalendarAttempt: attemptIso
-        }));
-
-        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : undefined;
-        const dismissedCanvasIds = notificationPrefsRef.current.dismissedCanvasIds || [];
-        const { diffResult } = await fetchAndSyncCanvasFeed(feedUrl, tasksRef.current, idToken, dismissedCanvasIds);
-
-        const newTasksFound = diffResult.newTasks || [];
-        const dateChanged = diffResult.dateChangedTasks || [];
-
-        // V4-112: Restrict date window (past 30 days .. +1 year), cap evaluated events (max 500), cap new items per sync (max 100)
-        const { tasksToImport, unimportedCount } = filterAndCapCanvasEvents(newTasksFound, new Date(), 100, 500);
-
-        if (tasksToImport.length > 0 || dateChanged.length > 0) {
-          // Write new items with a single batch instead of sequential addTask / setDoc calls
-          if (tasksToImport.length > 0) {
-            const preparedTasks: Task[] = tasksToImport.map(nt => ({
-              ...nt,
-              needs_review: true,
-              source: 'canvas'
-            }));
-            await batchAddTasks(preparedTasks);
-          }
-
-          // Apply date changes (cap at 100 to prevent flooding)
-          const cappedDateChanged = dateChanged.slice(0, 100);
-          for (const dct of cappedDateChanged) {
-            await updateTask(dct.existingTask.task_id, {
-              needs_review: true,
-              canvas_date_diff: dct.diff
-            });
-          }
-
-          const totalChanges = tasksToImport.length + cappedDateChanged.length;
-          let notifBody = `${tasksToImport.length} new items and ${cappedDateChanged.length} shifted deadlines are pending in your Review Inbox.`;
-          if (unimportedCount > 0) {
-            notifBody += ` (${unimportedCount} more not imported due to sync limit).`;
-          }
-
-          const notif: InAppNotification = {
-            id: `canvas_sync_${Date.now()}`,
-            type: 'canvas_sync',
-            action: 'open_review_inbox',
-            title: `🔄 Canvas Updates Found (${totalChanges})`,
-            body: notifBody,
-            createdAt: new Date().toISOString(),
-            read: false
-          };
-          setNotifications(prev => [notif, ...prev]);
-        }
-
-        const syncIso = new Date().toISOString();
-        setNotificationPrefs(prev => ({
-          ...prev,
-          lastCalendarAttempt: attemptIso,
-          lastCalendarSync: syncIso,
-          lastCalendarSyncError: ''
-        }));
-        // Read fresh prefs from ref at write time so any concurrent Save Preferences is preserved
-        const latestSuccessPrefs: NotificationPrefs = {
-          ...notificationPrefsRef.current,
-          lastCalendarAttempt: attemptIso,
-          lastCalendarSync: syncIso,
-          lastCalendarSyncError: ''
-        };
-        notificationPrefsRef.current = latestSuccessPrefs;
-        await updateUserNotificationPrefs(user.uid, latestSuccessPrefs);
-      } catch (syncErr: any) {
-        console.warn('Background Canvas auto-sync notice:', syncErr);
-        reportError(syncErr, { source: 'TaskProvider.canvas.backgroundSync' });
-        const errMsg = (syncErr?.message || String(syncErr || '')).toLowerCase();
-        let shortError = "Could not reach your Canvas calendar link";
-        if (
-          errMsg.includes('404') || 
-          errMsg.includes('401') || 
-          errMsg.includes('unauthorized') || 
-          errMsg.includes('not found') || 
-          errMsg.includes('forbidden') || 
-          errMsg.includes('no longer works') || 
-          errMsg.includes('invalid') ||
-          errMsg.includes('verify the url')
-        ) {
-          shortError = "Your Canvas calendar link no longer works. Get a new one from Canvas > Calendar > Calendar Feed.";
-        }
-        setNotificationPrefs(prev => ({
-          ...prev,
-          lastCalendarAttempt: attemptIso,
-          lastCalendarSyncError: shortError
-        }));
-        const latestFailPrefs: NotificationPrefs = {
-          ...notificationPrefsRef.current,
-          lastCalendarAttempt: attemptIso,
-          lastCalendarSyncError: shortError
-        };
-        notificationPrefsRef.current = latestFailPrefs;
-        await updateUserNotificationPrefs(user.uid, latestFailPrefs);
-
-        // Notify student about sync failure if no recent error notification exists
-        const errNotifId = `canvas_err_${Date.now()}`;
-        setNotifications(prev => {
-          if (prev.some(n => n.id.startsWith('canvas_err_') || n.id.startsWith('canvas_val_err_'))) return prev;
-          return [{
-            id: errNotifId,
-            type: 'canvas_sync',
-            title: '⚠️ Canvas Calendar Sync Issue',
-            body: shortError,
-            createdAt: new Date().toISOString(),
-            read: false
-          }, ...prev];
-        });
-      }
-    };
-
-    const handleManualSync = () => {
-      checkFeed(true);
-    };
-    window.addEventListener('ubc:sync-canvas-feed', handleManualSync);
-
-    const timer = setTimeout(() => checkFeed(urlChanged), 5000);
-    const interval = setInterval(() => checkFeed(false), 60 * 60 * 1000);
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-      window.removeEventListener('ubc:sync-canvas-feed', handleManualSync);
-    };
-  }, [user?.uid, isDemoMode, savedCalendarFeedUrl, autoSyncCalendar]);
+  useEffect(() => { notificationPrefsRef.current = notificationPrefs; }, [notificationPrefs]);
 
   // Update notification preferences
   const updatePrefsHandler = async (newPrefs: NotificationPrefs) => {
@@ -1355,7 +1155,7 @@ export function TaskProvider({
         if (currentSecondsLeft <= 0) {
           // Timer finished!
           if (prev.completed) return prev;
-          
+
           const { endsAt, ...timer } = prev;
           return {
             ...timer,
@@ -1388,7 +1188,7 @@ export function TaskProvider({
 
         if (remaining <= 0) {
           if (prev.completed) return prev;
-          
+
           const { endsAt, ...timer } = prev;
           return {
             ...timer,
@@ -1476,16 +1276,16 @@ export function TaskProvider({
   const pauseFocusTimer = () => {
     setActiveFocus(prev => {
       if (!prev) return null;
-      const currentSeconds = prev.endsAt 
+      const currentSeconds = prev.endsAt
         ? Math.max(0, Math.round((prev.endsAt - Date.now()) / 1000))
         : (prev.pausedRemaining ?? prev.secondsLeft);
-      const pausedState: ActiveFocusState = { 
-        ...prev, 
+      const pausedState: ActiveFocusState = {
+        ...prev,
         secondsLeft: currentSeconds,
         pausedRemaining: currentSeconds,
-        isRunning: false, 
+        isRunning: false,
         pausedAt: Date.now(),
-        endsAt: undefined 
+        endsAt: undefined
       };
       persistFocusTimerTransition(pausedState);
       return pausedState;
@@ -1514,14 +1314,14 @@ export function TaskProvider({
         return restartedState;
       }
       const remainingSecs = typeof prev.pausedRemaining === 'number' ? prev.pausedRemaining : prev.secondsLeft;
-      const resumedState: ActiveFocusState = { 
-        ...prev, 
+      const resumedState: ActiveFocusState = {
+        ...prev,
         secondsLeft: remainingSecs,
-        isRunning: true, 
+        isRunning: true,
         endsAt: now + remainingSecs * 1000,
         pausedRemaining: undefined,
         sessionId,
-        pausedAt: undefined 
+        pausedAt: undefined
       };
       persistFocusTimerTransition(resumedState);
       return resumedState;
@@ -1531,15 +1331,15 @@ export function TaskProvider({
   const resetFocusTimer = () => {
     setActiveFocus(prev => {
       if (!prev) return null;
-      const resetState: ActiveFocusState = { 
-        ...prev, 
-        secondsLeft: prev.durationSeconds, 
+      const resetState: ActiveFocusState = {
+        ...prev,
+        secondsLeft: prev.durationSeconds,
         endsAt: undefined,
         pausedRemaining: undefined,
         pausedAt: undefined,
-        loggedSeconds: 0, 
-        completed: false, 
-        isRunning: false 
+        loggedSeconds: 0,
+        completed: false,
+        isRunning: false
       };
       persistFocusTimerTransition(resetState);
       return resetState;
@@ -1566,7 +1366,7 @@ export function TaskProvider({
     const minutes = typeof minutesToLog === 'number' && Number.isFinite(minutesToLog)
       ? Math.min(Math.max(0, Math.round(minutesToLog)), remainderMinutes)
       : remainderMinutes;
-    
+
     if (focusToStop.taskId && minutes > 0) {
       // Fire-and-forget: perform optimistic local update and do not await Firestore network promise
       logManualFocusTime(focusToStop.taskId, minutes, focusToStop.mode, 'Manual log from timer', focusToStop.sessionId)
@@ -1579,9 +1379,9 @@ export function TaskProvider({
   };
 
   const logManualFocusTime = async (
-    taskId: string, 
-    minutes: number, 
-    mode: FocusTimerMode = 'custom', 
+    taskId: string,
+    minutes: number,
+    mode: FocusTimerMode = 'custom',
     notes?: string,
     customSessionId?: string
   ) => {
@@ -1628,7 +1428,7 @@ export function TaskProvider({
   // Group Workspace actions
   const createGroup = async (data: { name: string; course_code: string; description?: string; target_date?: string }): Promise<GroupProject> => {
     const userProfile = {
-      displayName: user?.displayName || 'UBC Student',
+      displayName: user?.displayName || 'Student',
       email: user?.email || '',
       photoURL: user?.photoURL || ''
     };
@@ -1642,7 +1442,7 @@ export function TaskProvider({
         created_by: 'demo-student',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        invite_code: `UBC${Math.floor(100 + Math.random() * 900)}`,
+        invite_code: `LMS${Math.floor(100 + Math.random() * 900)}`,
         members: ['demo-student'],
         member_details: {
           'demo-student': {
@@ -1668,7 +1468,7 @@ export function TaskProvider({
 
   const joinGroupByCode = async (code: string): Promise<GroupProject | null> => {
     const userProfile = {
-      displayName: user?.displayName || 'UBC Student',
+      displayName: user?.displayName || 'Student',
       email: user?.email || '',
       photoURL: user?.photoURL || ''
     };
@@ -1680,7 +1480,7 @@ export function TaskProvider({
         setActiveGroupId(found.id);
         return found;
       }
-      throw new Error(`No group found with invite code "${code}". Try "UBC310".`);
+      throw new Error(`No group found with invite code "${code}". Try "DEMO310".`);
     }
 
     const joined = await joinFirestoreGroupByCode(user.uid, userProfile, code);
@@ -1735,7 +1535,7 @@ export function TaskProvider({
       return taskId;
     }
 
-    return await saveFirestoreGroupTask(groupId, task, user.uid, user.displayName || 'UBC Student');
+    return await saveFirestoreGroupTask(groupId, task, user.uid, user.displayName || 'Student');
   };
 
   const deleteGroupTaskAction = async (groupId: string, taskId: string): Promise<void> => {
@@ -1751,7 +1551,7 @@ export function TaskProvider({
   const refreshTasks = useCallback(async () => {
     if (isDemoMode) return;
     if (!user?.uid) return;
-    
+
     setLoading(true);
     try {
       const [fetchedTasks, fetchedCourses] = await Promise.all([fetchUserTasks(user.uid), fetchUserCourses(user.uid)]);
@@ -2213,7 +2013,7 @@ export function TaskProvider({
     const link = document.createElement('a');
     link.setAttribute('href', url);
     const vancouverDate = formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM-dd');
-    const fileName = `UBC_Dashboard_Backup_${vancouverDate}.json`;
+    const fileName = `My_LMS_Backup_${vancouverDate}.json`;
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
@@ -2245,12 +2045,12 @@ export function TaskProvider({
   const exportToCSV = () => {
     const courseworkTasks = tasks.filter(t => !isTaskAnnouncement(t));
     if (courseworkTasks.length === 0) {
-      showToast({ message: 'Nothing to export yet — import your Canvas calendar first.' });
+      showToast({ message: 'Nothing to export yet — add tasks manually or upload a course outline first.' });
       return null;
     }
     const headers = [
-      'Task ID', 'Course', 'Title', 'Type', 'Due Date', 'Status', 
-      'Points Earned', 'Points Possible', 'Grade', 'Next Action', 
+      'Task ID', 'Course', 'Title', 'Type', 'Due Date', 'Status',
+      'Points Earned', 'Points Possible', 'Grade', 'Next Action',
       'Summary', 'Progress Notes'
     ];
 
@@ -2282,7 +2082,7 @@ export function TaskProvider({
     const link = document.createElement('a');
     link.setAttribute('href', url);
     const vancouverDate = formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM-dd');
-    const fileName = `UBC_Tasks_${vancouverDate}.csv`;
+    const fileName = `My_LMS_Tasks_${vancouverDate}.csv`;
     link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
@@ -2459,11 +2259,11 @@ export function TaskProvider({
   };
 
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const [importInitialTab, setImportInitialTab] = useState<ImportTabType>('calendar');
+  const [importInitialTab, setImportInitialTab] = useState<ImportTabType>('file');
 
   const openImport = useCallback((tab?: ImportTabType) => {
     if (tab) {
-      setImportInitialTab(tab);
+      setImportInitialTab(tab === 'calendar' ? 'file' : tab);
     }
     setIsImportOpen(true);
   }, []);
