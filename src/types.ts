@@ -262,6 +262,7 @@ export interface DashboardBackupSnapshot {
 
 export type AppUser = {
   uid: string;
+  emailVerified?: boolean;
   email?: string | null;
   displayName?: string | null;
   photoURL?: string | null;

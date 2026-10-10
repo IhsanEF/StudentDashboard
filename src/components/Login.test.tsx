@@ -20,6 +20,7 @@ const env = {
     if (failure) throw failure;
     return new Promise(resolve => { finishSignIn = resolve; });
   },
+  emailSignUp: async (...args: any[]) => { calls.push(['signup', ...args]); if (failure) throw failure; return { user: { uid: 'new-user', emailVerified: false }, verificationSent: true }; },
   resetPassword: async (...args: any[]) => { calls.push(['reset', ...args]); if (failure) throw failure; }
 };
 const bundle = await build({ entryPoints: ['src/components/Login.tsx'], bundle: true, write: false, platform: 'node', format: 'cjs',
@@ -27,7 +28,7 @@ const bundle = await build({ entryPoints: ['src/components/Login.tsx'], bundle: 
     b.onResolve({ filter: /^(react|.*\/auth|.*\/PrivacyModal)$/ }, args => ({ path: args.path, namespace: 'test' }));
     b.onLoad({ filter: /.*/, namespace: 'test' }, args => ({ contents: args.path === 'react'
       ? 'export const {useState,useEffect}=globalThis.env.hooks;'
-      : args.path.endsWith('/auth') ? 'export const {googleSignIn,emailSignIn,resetPassword}=globalThis.env;'
+      : args.path.endsWith('/auth') ? 'export const {googleSignIn,emailSignIn,emailSignUp,resetPassword}=globalThis.env;'
       : 'export default () => null;' }));
   } }] });
 const module = { exports: {} as any };
@@ -79,3 +80,25 @@ failure = { code: 'auth/user-not-found' };
 await button('Forgot password?').props.onClick();
 assert.match(text(render()), /If an account exists/);
 console.log('Login: email form, persistence choice, busy state, credential errors and private reset feedback passed.');
+
+failure = null;
+button('Create an account with email').props.onClick();
+assert.equal(input('login-password').props.autoComplete, 'new-password');
+assert.equal(input('confirm-password').props.required, true);
+input('login-password').props.onChange({ target: { value: 'NewPassword123!' } });
+input('confirm-password').props.onChange({ target: { value: 'different' } });
+await nodes(render()).find(n => n.type === 'form').props.onSubmit({ preventDefault() {} });
+assert.match(text(render()), /passwords do not match/);
+assert.equal(calls.some(call => call[0] === 'signup'), false);
+input('confirm-password').props.onChange({ target: { value: 'NewPassword123!' } });
+await nodes(render()).find(n => n.type === 'form').props.onSubmit({ preventDefault() {} });
+assert.deepEqual(calls.at(-1), ['signup', 'student@example.com', 'NewPassword123!', true]);
+assert.equal((users as any[]).at(-1)?.emailVerified, false);
+assert.equal(input('confirm-password').props.value, '');
+failure = { code: 'auth/email-already-in-use' };
+await nodes(render()).find(n => n.type === 'form').props.onSubmit({ preventDefault() {} });
+assert.match(text(render()), /account already uses this email/);
+button('Sign in with email').props.onClick();
+assert.equal(input('login-password').props.autoComplete, 'current-password');
+assert.equal(input('confirm-password'), undefined);
+console.log('Email registration: confirmation validation, account creation, duplicate recovery and mode switching passed.');

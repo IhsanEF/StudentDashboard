@@ -521,7 +521,7 @@ const authBundle = await build({ entryPoints: ['src/auth.ts'], bundle: true, wri
            export const setPersistence = async () => {}; export const browserSessionPersistence = {}; export const browserLocalPersistence = {};
            export const signOut = async () => { globalThis.state.signOuts++; globalThis.state.callback(); };
            export const signInWithPopup = async () => null; export const signInWithRedirect = async () => {};
-           export const signInWithEmailAndPassword = async () => null; export const sendPasswordResetEmail = async () => {};
+           export const createUserWithEmailAndPassword = async () => null; export const sendEmailVerification = async () => {}; export const validatePassword = async () => ({isValid:true}); export const reload = async () => {}; export const signInWithEmailAndPassword = async () => null; export const sendPasswordResetEmail = async () => {};
            export const getRedirectResult = async () => null; export const onAuthStateChanged = () => () => {};`
         : `export const initializeFirestore = () => ({}); export const getFirestore = () => ({});
            export const persistentLocalCache = () => ({}); export const persistentMultipleTabManager = () => ({});
@@ -571,6 +571,13 @@ assert.equal(cleanedUids.length, 0, 'Initial signed-out startup must not termina
 authSuccess({ uid: 'real-auth-session' }); appHooks.render(() => appModule.exports.default());
 authFailure(); appHooks.render(() => appModule.exports.default());
 assert.deepEqual(cleanedUids, ['real-auth-session'], 'Established auth failure clears caches and signs out');
+authSuccess({ uid: 'new-email-user', emailVerified: false });
+const verificationView = appHooks.render(() => appModule.exports.default());
+assert.notEqual(verificationView.type, 'provider', 'Unverified users must not mount dashboard data subscriptions');
+assert.equal(typeof verificationView.props.onVerified, 'function');
+verificationView.props.onVerified({ uid: 'new-email-user', emailVerified: true });
+assert.equal(appHooks.render(() => appModule.exports.default()).type, 'provider');
+
 console.log('Provider, notification, timer, auth and batch 6 regression checks passed.');
 
 // Batch 10: controlled clock refresh, complete-list pruning, and delete rollback.

@@ -7,6 +7,10 @@ import {
   signInWithPopup, 
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  validatePassword,
+  reload,
   signInWithRedirect, 
   getRedirectResult, 
   GoogleAuthProvider, 
@@ -193,6 +197,39 @@ export const emailSignIn = async (email: string, password: string, keepSignedIn 
 };
 
 export const resetPassword = (email: string): Promise<void> => sendPasswordResetEmail(auth, email.trim());
+
+export const sendVerificationEmail = (): Promise<void> => {
+  if (!auth.currentUser) return Promise.reject(new Error('Sign in again to verify your email.'));
+  return sendEmailVerification(auth.currentUser, { url: window.location.origin });
+};
+
+export const emailSignUp = async (email: string, password: string, keepSignedIn = false) => {
+  const policy = await validatePassword(auth, password);
+  if (password.length < 8 || !policy.isValid) {
+    throw Object.assign(new Error('Choose a password with at least 8 characters that meets the password requirements.'), { code: 'auth/weak-password' });
+  }
+  await setPersistence(auth, keepSignedIn ? browserLocalPersistence : browserSessionPersistence);
+  const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  // Account creation signs in immediately. The app keeps this user on the
+  // verification screen even if delivery fails, where they can request a retry.
+  let verificationSent = false;
+  try {
+    await sendVerificationEmail();
+    verificationSent = true;
+  } catch {
+    console.warn('Verification email could not be sent; the user can resend it.');
+  }
+  return { user, verificationSent };
+};
+
+export const checkEmailVerification = async (): Promise<User | null> => {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Sign in again to verify your email.');
+  await reload(user);
+  if (!user.emailVerified) return null;
+  await user.getIdToken(true);
+  return user;
+};
 
 /**
  * Robust sign-out:

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 
 async function harness(fallback = false) {
   const calls: string[] = [];
-  const env: any = { auth: {}, log: null, settings: null, rejectPersistence: false,
+  const env: any = { auth: { currentUser: null }, validPassword: true, mailFailure: false, log: null, settings: null, rejectPersistence: false,
     initializeApp: (config: any) => { env.config = config; return {}; }, onLog: (fn: any) => env.log = fn,
     getAuth: () => env.auth, GoogleAuthProvider: class {},
     browserSessionPersistence: 'session', browserLocalPersistence: 'local',
@@ -16,6 +16,14 @@ async function harness(fallback = false) {
     signInWithEmailAndPassword: async (_: any, email: string, password: string) => {
       calls.push(`email:${email}:${password}`); return { user: { uid: 'email-user' } };
     },
+    validatePassword: async () => ({ isValid: env.validPassword }),
+    createUserWithEmailAndPassword: async (_: any, email: string, password: string) => {
+      calls.push(`signup:${email}:${password}`);
+      env.auth.currentUser = { uid: 'new-user', emailVerified: false, getIdToken: async (force: boolean) => calls.push(`token:${force}`) };
+      return { user: env.auth.currentUser };
+    },
+    sendEmailVerification: async (_: any, settings: any) => { calls.push(`verify:${settings.url}`); if (env.mailFailure) throw new Error('delivery failed'); },
+    reload: async () => { calls.push('reload'); },
     sendPasswordResetEmail: async (_: any, email: string) => { calls.push(`reset:${email}`); },
     persistentMultipleTabManager: () => 'multiple-tabs', persistentLocalCache: (options: any) => options,
     initializeFirestore: (_: any, settings: any) => { env.settings = settings; return {}; },
@@ -31,14 +39,14 @@ async function harness(fallback = false) {
       b.onResolve({ filter: /^firebase\// }, args => ({ path: args.path, namespace: 'test' }));
       b.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: `export const {
         initializeApp,onLog,getAuth,setPersistence,browserSessionPersistence,browserLocalPersistence,
-        GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,sendPasswordResetEmail,persistentMultipleTabManager,
+        GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,sendPasswordResetEmail,createUserWithEmailAndPassword,sendEmailVerification,validatePassword,reload,persistentMultipleTabManager,
         persistentLocalCache,initializeFirestore,doc,getDocFromCache
       }=globalThis.env;
       export const getRedirectResult=async()=>null,onAuthStateChanged=()=>()=>{},signOut=async()=>{},
         getFirestore=()=>({}),terminate=async()=>{},clearIndexedDbPersistence=async()=>{};` }));
     } }] });
   const module = { exports: {} as any };
-  new Function('module','exports','require','globalThis', bundle.outputFiles[0].text)(module,module.exports,createRequire(import.meta.url),{env});
+  new Function('module','exports','require','globalThis', 'window', 'console', bundle.outputFiles[0].text)(module,module.exports,createRequire(import.meta.url),{env}, {location:{origin:'https://studentdashboardlms.onrender.com'}}, {warn(){},error(){}});
   return { api: module.exports, env, calls };
 }
 const session = await harness();
@@ -79,3 +87,23 @@ for (const fallback of [false, true]) {
   assert.equal(statuses.length, count, 'Unsubscribed components must not receive state writes');
 }
 console.log('Batch 24 auth: session default, opt-in local persistence for both flows, persistence failure prevents sign-in, multi-tab cache and asynchronous memory fallback passed.');
+
+const signup = await harness();
+await assert.rejects(() => signup.api.emailSignUp(' student@example.com ', 'short'), /at least 8/);
+assert.deepEqual(signup.calls, []);
+signup.env.validPassword = false;
+await assert.rejects(() => signup.api.emailSignUp('student@example.com', 'Password123!'), /requirements/);
+signup.env.validPassword = true;
+const created = await signup.api.emailSignUp(' student@example.com ', ' Password123! ');
+assert.equal(created.verificationSent, true);
+assert.deepEqual(signup.calls, ['session', 'signup:student@example.com: Password123! ', 'verify:https://studentdashboardlms.onrender.com']);
+signup.calls.length = 0;
+assert.equal(await signup.api.checkEmailVerification(), null);
+assert.deepEqual(signup.calls, ['reload'], 'Unverified users do not receive a refreshed dashboard token');
+signup.calls.length = 0;
+signup.env.auth.currentUser.emailVerified = true;
+assert.equal((await signup.api.checkEmailVerification()).uid, 'new-user');
+assert.deepEqual(signup.calls, ['reload', 'token:true']);
+signup.env.mailFailure = true;
+assert.equal((await signup.api.emailSignUp('student@example.com', 'Password123!', true)).verificationSent, false);
+console.log('Registration auth: password policy, persistence, verification delivery failure recovery and token refresh passed.');

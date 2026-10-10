@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { TaskProvider } from './TaskProvider';
 import Login from './components/Login';
+import EmailVerification from './components/EmailVerification';
 import DashboardLayout from './components/DashboardLayout';
 import Overview from './components/Overview';
 import TasksList from './components/TasksList';
@@ -114,6 +115,7 @@ export default function App() {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isDemo, setIsDemo] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [verificationSent, setVerificationSent] = useState<boolean | undefined>();
   const authenticatedUidRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -171,13 +173,20 @@ export default function App() {
   if (!user) {
     return (
       <Login 
-        onLogin={(u) => {
+        onLogin={(u, sent) => {
           setIsDemo(false);
+          setVerificationSent(sent);
           setUser(u);
         }} 
         onDemoLogin={handleDemoLogin} 
       />
     );
+  }
+
+  if (!isDemo && user.emailVerified === false) {
+    return <EmailVerification email={user.email} verificationSent={verificationSent}
+      onVerified={verifiedUser => setUser({ ...verifiedUser })}
+      onSignOut={async () => { await firebaseLogout(user.uid); handleLogout(); setVerificationSent(undefined); }} />;
   }
 
   return (

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { GraduationCap, AlertCircle, Loader2, Copy, Check, Info } from 'lucide-react';
-import { googleSignIn, emailSignIn, resetPassword } from '../auth';
+import { googleSignIn, emailSignIn, emailSignUp, resetPassword } from '../auth';
 import PrivacyModal from './PrivacyModal';
 
 export default function Login({ 
   onLogin,
   onDemoLogin
 }: { 
-  onLogin: (user: any) => void;
+  onLogin: (user: any, verificationSent?: boolean) => void;
   onDemoLogin: () => void;
 }) {
   const [error, setError] = useState('');
@@ -18,6 +18,8 @@ export default function Login({
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [notice, setNotice] = useState('');
   const [pendingAction, setPendingAction] = useState<'google' | 'email' | 'reset' | null>(null);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -54,6 +56,10 @@ export default function Login({
       setError('The email or password is incorrect. Try again or reset your password.');
     } else if (err.code === 'auth/invalid-email') {
       setError('Enter a valid email address.');
+    } else if (err.code === 'auth/email-already-in-use') {
+      setError('An account already uses this email. Sign in, reset your password, or use Google if you registered with Google.');
+    } else if (err.code === 'auth/weak-password' || err.code === 'auth/password-does-not-meet-requirements') {
+      setError('Choose a password with at least 8 characters that meets the password requirements.');
     } else if (err.code === 'auth/too-many-requests') {
       setError('Too many sign-in attempts. Please wait a few minutes and try again.');
     } else if (err.code === 'auth/user-disabled') {
@@ -87,16 +93,26 @@ export default function Login({
 
   const handleEmailLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (creatingAccount && password !== confirmPassword) {
+      setError('The passwords do not match. Please enter the same password twice.');
+      return;
+    }
     setLoading(true);
     setPendingAction('email');
     setError('');
     setNotice('');
     try {
-      onLogin(await emailSignIn(email, password, keepSignedIn));
+      if (creatingAccount) {
+        const result = await emailSignUp(email, password, keepSignedIn);
+        onLogin(result.user, result.verificationSent);
+      } else {
+        onLogin(await emailSignIn(email, password, keepSignedIn));
+      }
     } catch (err: any) {
       showAuthError(err);
     } finally {
       setPassword('');
+      setConfirmPassword('');
       setLoading(false);
       setPendingAction(null);
     }
@@ -198,13 +214,18 @@ export default function Login({
             {pendingAction === 'google' ? 'Signing in...' : 'Sign in with Google'}
           </button>
 
-          <button type="button" onClick={() => { setShowEmailForm(!showEmailForm); setError(''); setNotice(''); setPassword(''); }}
+          <button type="button" onClick={() => { setShowEmailForm(!showEmailForm || creatingAccount); setCreatingAccount(false); setError(''); setNotice(''); setPassword(''); setConfirmPassword(''); }}
             disabled={isBusy} aria-expanded={showEmailForm} aria-controls="email-sign-in"
             className="w-full border border-slate-300 text-slate-800 hover:bg-slate-50 rounded-xl py-3 px-4 font-semibold text-sm disabled:opacity-60">
-            {showEmailForm ? 'Hide email sign-in' : 'Sign in with email'}
+            {showEmailForm && !creatingAccount ? 'Hide email sign-in' : 'Sign in with email'}
+          </button>
+          <button type="button" disabled={isBusy} onClick={() => { setShowEmailForm(true); setCreatingAccount(true); setError(''); setNotice(''); setPassword(''); setConfirmPassword(''); }}
+            className="w-full text-sm font-semibold text-blue-700 underline disabled:opacity-60">
+            Create an account with email
           </button>
           {showEmailForm && (
             <form id="email-sign-in" onSubmit={handleEmailLogin} className="space-y-3 pt-2">
+              <h2 className="text-lg font-semibold text-slate-900">{creatingAccount ? 'Create your account' : 'Email sign-in'}</h2>
               <div>
                 <label htmlFor="login-email" className="block text-sm font-medium text-slate-700 mb-1">Email address</label>
                 <input id="login-email" type="email" autoComplete="username" required value={email}
@@ -213,18 +234,27 @@ export default function Login({
               </div>
               <div>
                 <label htmlFor="login-password" className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                <input id="login-password" type="password" autoComplete="current-password" required value={password}
+                <input id="login-password" type="password" autoComplete={creatingAccount ? 'new-password' : 'current-password'} minLength={creatingAccount ? 8 : undefined} required value={password}
                   onChange={e => setPassword(e.target.value)} disabled={isBusy}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm" />
               </div>
+              {creatingAccount && <>
+                <p className="text-xs text-slate-600">Choose a password with at least 8 characters. This is your dashboard password.</p>
+                <div>
+                  <label htmlFor="confirm-password" className="block text-sm font-medium text-slate-700 mb-1">Confirm password</label>
+                  <input id="confirm-password" type="password" autoComplete="new-password" minLength={8} required value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)} disabled={isBusy}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm" />
+                </div>
+              </>}
               <button type="submit" disabled={isBusy} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold text-sm disabled:opacity-60">
-                {pendingAction === 'email' ? 'Signing in...' : 'Sign in'}
+                {pendingAction === 'email' ? (creatingAccount ? 'Creating account...' : 'Signing in...') : (creatingAccount ? 'Create account' : 'Sign in')}
               </button>
-              <button type="button" disabled={isBusy} onClick={handlePasswordReset}
+              {!creatingAccount && <button type="button" disabled={isBusy} onClick={handlePasswordReset}
                 className="text-sm text-blue-700 underline disabled:opacity-60">
                 {pendingAction === 'reset' ? 'Sending reset link...' : 'Forgot password?'}
-              </button>
-              <p className="text-xs text-slate-500">Use the email and password for your existing dashboard account.</p>
+              </button>}
+              <p className="text-xs text-slate-500">{creatingAccount ? 'We’ll email you a verification link before you enter the dashboard.' : 'Use the email and password for your existing dashboard account.'}</p>
             </form>
           )}
         </div>
