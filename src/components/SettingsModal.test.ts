@@ -18,7 +18,7 @@ const bundle = await build({ entryPoints: ['src/components/SettingsModal.tsx'], 
         : path.includes('firebase/firestore') ? 'export const doc = () => {}; export const deleteDoc = () => {}; export const writeBatch = () => {}; export const collection = () => {}; export const getDocs = () => {};'
         : path.includes('notificationService') ? "export const generateDigestPreview = () => ({subject:'',title:'',summaryText:'',tasks:[]});"
         : path.endsWith('/utils') ? "export const formatInTimeZone = () => ''; export const TIMEZONE = 'America/Vancouver'; export const parseLocalDate = () => null; export const isTaskAnnouncement = task => task.type === 'announcement';"
-        : path === 'lucide-react' ? 'export const X=0,Bell=0,Clock=0,Moon=0,Sliders=0,Sparkles=0,Calendar=0,Check=0,AlertCircle=0,RefreshCw=0,User=0,CheckCircle2=0,Volume2=0,VolumeX=0,Smartphone=0,Copy=0,ExternalLink=0,RotateCw=0,Download=0,Upload=0,Database=0,Archive=0,History=0,AlertTriangle=0,FileSpreadsheet=0,Trash2=0,ShieldAlert=0;'
+        : path === 'lucide-react' ? 'export const X=0,Bell=0,Clock=0,Moon=0,Sliders=0,Sparkles=0,Calendar=0,Check=0,AlertCircle=0,RefreshCw=0,User=0,CheckCircle2=0,Volume2=0,VolumeX=0,Smartphone=0,Copy=0,ExternalLink=0,RotateCw=0,Download=0,Upload=0,Database=0,Archive=0,History=0,AlertTriangle=0,FileSpreadsheet=0,Trash2=0,ShieldAlert=0,MessageSquare=0;'
         : path.endsWith('/PWAInstallButton') ? 'export const PWAInstallButton = 0;'
         : path.endsWith('/ViewModeToggle') ? 'export const ViewModeToggle = 0;' : 'export default 0;';
       return { contents };
@@ -56,9 +56,14 @@ function harness(permission: 'default' | 'denied' | 'unsupported' = 'default', d
     get jsonReads() { return jsonReads; }, get permissionRequests() { return permissionRequests; }, get focused() { return focused; }, get digestCalls() { return digestCalls; } };
 }
 const h = harness();
-for (const id of ['tab-notifications-btn', 'tab-calendar-btn', 'tab-backup-btn', 'tab-profile-btn']) {
+for (const id of ['tab-notifications-btn', 'tab-calendar-btn', 'tab-backup-btn', 'tab-profile-btn', 'tab-feedback-btn']) {
   h.byId(id).props.onClick(); h.render(); assert.ok(h.byId('save-settings-btn'), `Footer Save is present on ${id}`);
 }
+h.byId('tab-feedback-btn').props.onClick(); h.render();
+let feedbackOpened = false;
+(h.props as any).onOpenFeedback = () => { feedbackOpened = true; }; h.render();
+h.nodes().find(n => n.type === 'button' && n.props.children === 'Send feedback').props.onClick();
+assert.ok(feedbackOpened, 'Settings opens the shared feedback form');
 h.byId('tab-notifications-btn').props.onClick(); h.render();
 const timing = h.nodes().find(n => n.props?.children?.[0]?.props?.children === '15 min before');
 assert.equal(timing.props['aria-pressed'], false); timing.props.onClick(); h.render();

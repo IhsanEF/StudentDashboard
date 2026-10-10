@@ -96,3 +96,10 @@ npm ci
 node scripts/check-firestore-config.mjs
 npx firebase-tools@15.30.2 emulators:exec --only firestore --project demo-batch21 'npx tsx src/services/Batch21.test.ts'
 ```
+# Feedback & support
+
+Students can open the quiet floating Feedback button or Settings → Feedback → Send feedback. The form supports issues, feature requests, improvements, usability problems and general comments. It keeps an unsent draft in memory while closed, and preserves it if delivery fails. Demo visitors can preview the form but cannot submit.
+
+`POST /api/feedback` requires an authenticated, verified Google or email account. Submissions are validated, limited to five per account per hour, and saved centrally in the existing named Firestore database under `feedback_submissions`. Retries use an account-scoped request ID to avoid duplicate records. The server sets `status: new`; clients cannot choose a reporter, status or app version. The collection has no browser-facing read access under the existing Firestore rules. Deployment administrators can review it through Firestore using the existing project access. Logs contain only receipt IDs and categories, never messages or account identifiers.
+
+Optional context contains only browser family, app version and the current section. No course records, grades, URLs, screenshots or recent activity are attached. Records expire after 90 days; the running server performs bounded cleanup alongside rate-limit cleanup (a sleeping free service cleans up when it resumes). This feedback feature does not configure the separate monitoring or scheduled AI-maintenance system described in the reference document.

@@ -250,6 +250,9 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
                 <p className="text-xs text-slate-600 mt-1">
                   <strong>User Profile Document:</strong> Your cloud account root record (<code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">users/{'{uid}'}</code>) stores your authenticated email, display name, account creation date, and notification preferences.
                 </p>
+                <p className="text-xs text-slate-600 mt-1">
+                  <strong>Feedback & support:</strong> Messages you choose to send are stored privately in Firebase for the My LMS team, with a pseudonymous reporter identifier and submission time. Browser, app version and section details are included only if you select that option. Feedback is retained for up to 90 days and removed during the next running cleanup cycle. Please keep passwords, grades and private student information out of messages.
+                </p>
               </div>
             </div>
 

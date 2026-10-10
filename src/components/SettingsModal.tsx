@@ -35,7 +35,8 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   Trash2,
-  ShieldAlert
+  ShieldAlert,
+  MessageSquare
 } from 'lucide-react';
 import DigestPreviewModal from './DigestPreviewModal';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -46,6 +47,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: AppUser | null;
+  onOpenFeedback?: () => void;
 }
 
 const AVAILABLE_LEAD_TIMES = [
@@ -57,7 +59,7 @@ const AVAILABLE_LEAD_TIMES = [
   { minutes: 10080, label: '1 week before' }
 ];
 
-export default function SettingsModal({ isOpen, onClose, user }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, user, onOpenFeedback }: SettingsModalProps) {
   const {
     notificationPrefs,
     updateNotificationPrefs,
@@ -84,7 +86,7 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
 
   const { isDetailed } = useViewMode();
 
-  const [activeTab, setActiveTab] = useState<'reminders' | 'calendar' | 'backup' | 'account'>('reminders');
+  const [activeTab, setActiveTab] = useState<'reminders' | 'calendar' | 'backup' | 'account' | 'feedback'>('reminders');
   const [prefs, setPrefs] = useState<NotificationPrefs>(notificationPrefs);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -736,8 +738,8 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
     }
   };
 
-  const tabs = ['reminders', 'calendar', 'backup', 'account'] as const;
-  const tabIds = ['tab-notifications-btn', 'tab-calendar-btn', 'tab-backup-btn', 'tab-profile-btn'];
+  const tabs = ['reminders', 'calendar', 'backup', 'account', 'feedback'] as const;
+  const tabIds = ['tab-notifications-btn', 'tab-calendar-btn', 'tab-backup-btn', 'tab-profile-btn', 'tab-feedback-btn'];
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const index = tabs.indexOf(activeTab);
     const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length
@@ -860,10 +862,21 @@ export default function SettingsModal({ isOpen, onClose, user }: SettingsModalPr
               <UserIcon className="w-4 h-4" />
               Account
             </button>
+            <button id="tab-feedback-btn" role="tab" aria-selected={activeTab === 'feedback'} aria-controls="settings-tab-panel"
+              tabIndex={activeTab === 'feedback' ? 0 : -1} onClick={() => setActiveTab('feedback')}
+              className={`pb-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap cursor-pointer ${activeTab === 'feedback' ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}>
+              <MessageSquare className="w-4 h-4" />Feedback
+            </button>
           </div>
 
           {/* Modal Body */}
           <div id="settings-tab-panel" role="tabpanel" aria-labelledby={tabIds[tabs.indexOf(activeTab)]} tabIndex={0} className="p-6 overflow-y-auto space-y-6 flex-1 text-sm bg-slate-50/40 dark:bg-slate-950/30">
+            {activeTab === 'feedback' && <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 dark:bg-slate-900 dark:border-slate-700">
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Feedback & support</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Report an issue, request a feature, suggest an improvement or tell us what feels confusing.</p>
+              <button type="button" onClick={onOpenFeedback} className="min-h-11 rounded-xl bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700">Send feedback</button>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Your message is shared privately with the My LMS team. Browser details are optional.</p>
+            </div>}
             {/* 1. Reminders Tab */}
             {activeTab === 'reminders' && (
               <div className="space-y-6">

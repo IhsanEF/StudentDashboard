@@ -2,6 +2,7 @@ import { getTaskEstimatedHours } from './src/services/workloadService';
 import { sanitizeUrl, checkIfDateIsPast, validateAndResolveUrl, clampNumber, feedDescriptionToText, normalizeCourseLabel, courseStorageId, isAiBillingUnavailable, validateDueDate, parseNaturalLanguageDate, parseNaturalLanguageTaskFallback, parseIcsEvents, RecurringCalendarEventError, icsText, getNextDayDateString, parseAndValidateFeedDueAt, buildTaskVevent, normalizeTimeTo24h, normalizeImportedExamTimes } from './server/lib';
 export { sanitizeUrl, isPrivateOrReservedIp } from './server/lib';
 import express from 'express';
+import { mountFeedbackRoutes, sweepExpiredFeedback } from './server/feedback';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -585,6 +586,7 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
   setInterval(() => {
     sweepRateLimits().catch(err => console.error('[RATE_LIMIT_CLEANUP_ERROR]', err));
+    sweepExpiredFeedback(getAdminFirestore()).catch(() => console.warn('[FEEDBACK_CLEANUP_ERROR] Cleanup will retry'));
   }, 60_000).unref();
 
   // Security headers with Helmet (Step 23)
@@ -2338,6 +2340,7 @@ CRITICAL ACCURACY MANDATES:
   });
 
   // Catch-all 404 handler for unknown API routes (Step 23)
+  mountFeedbackRoutes(app, { authenticate: requireAuth, db: getAdminFirestore, rateLimit: checkRateLimit });
   app.all(['/api', '/api/*all'], (req, res) => res.status(404).json({ error: 'Not found' }));
 
 

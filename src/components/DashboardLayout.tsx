@@ -16,6 +16,7 @@ import SettingsModal from './SettingsModal';
 import EditTaskModal from './EditTaskModal';
 import AddTaskModal from './AddTaskModal';
 import FloatingFocusTimer from './FloatingFocusTimer';
+import FeedbackWidget from './FeedbackWidget';
 import ReviewInboxModal from './ReviewInboxModal';
 import { PWAInstallButton } from './PWAInstallButton';
 import { OfflineIndicator } from './OfflineIndicator';
@@ -61,6 +62,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
   }, [isImportOpen]);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isReviewInboxOpen, setIsReviewInboxOpen] = useState(false);
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const { modalRef: mobileMoreRef } = useModalFocus({
@@ -254,6 +256,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
     isImportOpen ||
     isPrivacyModalOpen ||
     isSettingsOpen ||
+    isFeedbackOpen ||
     isReviewInboxOpen ||
     !!selectedTaskForEditId ||
     isMobileMoreOpen;
@@ -1021,6 +1024,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         user={user}
+        onOpenFeedback={() => setIsFeedbackOpen(true)}
       />
         </ErrorBoundary>
       )}
@@ -1046,6 +1050,9 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
         />
         </ErrorBoundary>
       )}
+
+      <FeedbackWidget key={user?.uid || 'demo'} open={isFeedbackOpen} onOpen={() => setIsFeedbackOpen(true)} onClose={() => setIsFeedbackOpen(false)}
+        hidden={isAnyModalOpen || focusModeActive} section={isSettingsOpen ? 'Settings' : activeTab} isDemoMode={isDemoMode} />
 
       {/* Floating Pomodoro & Deep Work Focus Timer (stacked at z-40, hidden when any modal or More sheet is open) */}
       {!isAnyModalOpen && !timerDismissed && (
