@@ -81,7 +81,7 @@ async function service(db: any, mock?: any) {
     external: mock ? [] : ['firebase/*'], plugins:[{name:'batch14-transport', setup(builder) {
       builder.onResolve({filter:/^\.\.\/auth$/}, () => ({path:'auth',namespace:'batch14'}));
       if (mock) builder.onResolve({filter:/^firebase\/(firestore|auth)$/}, args => ({path:args.path,namespace:'batch14'}));
-      builder.onLoad({filter:/.*/,namespace:'batch14'}, args => ({contents:args.path === 'auth' ? 'export const db = globalThis.testDb;' : args.path.endsWith('/auth') ? '' :
+      builder.onLoad({filter:/.*/,namespace:'batch14'}, args => ({contents:args.path === 'auth' ? 'export const db = globalThis.testDb; export const getAuthHeader=async()=>({});' : args.path.endsWith('/auth') ? '' :
         ['collection','doc','getDoc','getDocs','setDoc','updateDoc','deleteDoc','deleteField','onSnapshot','serverTimestamp','writeBatch','runTransaction','query','where','limit'].map(name => `export const ${name} = (...args) => globalThis.testTransport.${name}(...args);`).join('\n')}));
     }}]});
   const module = {exports:{} as any};
