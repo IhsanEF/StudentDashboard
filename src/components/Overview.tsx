@@ -92,8 +92,8 @@ export default function Overview({ onNavigate }: OverviewProps) {
         { label: 'Due today', count: dueToday.length, initialGroup: 'Due today', countColor: 'text-slate-800', labelColor: 'text-slate-500' },
         { label: 'Next 7 days', count: next7Days.length, initialGroup: 'Next 7 days', countColor: 'text-slate-800', labelColor: 'text-slate-500' },
         { label: 'Working', count: working.length, initialGroup: 'Working', countColor: 'text-purple-700', labelColor: 'text-purple-700/80' },
-        { label: 'Submitted', count: submitted.length, initialGroup: 'Submitted', countColor: 'text-teal-700', labelColor: 'text-teal-700/80' },
-        { label: 'Done', count: completed.length, initialGroup: 'Done', countColor: 'text-emerald-700', labelColor: 'text-emerald-700/80' },
+        { label: 'Submitted', count: submitted.length, initialGroup: 'Submitted', countColor: 'text-teal-700', labelColor: 'text-teal-700' },
+        { label: 'Done', count: completed.length, initialGroup: 'Done', countColor: 'text-emerald-700', labelColor: 'text-emerald-700' },
       ];
 
   // 4. Workload crunch week check
@@ -140,7 +140,7 @@ export default function Overview({ onNavigate }: OverviewProps) {
               <p className={`text-xs font-semibold mb-1 ${tile.labelColor}`}>{tile.label}</p>
               <p className={`text-2xl font-black ${tile.countColor}`}>{tile.count}</p>
             </div>
-            <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 group-hover:text-blue-600 transition-colors mt-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 group-hover:text-blue-600 transition-colors mt-2 pt-2 border-t border-slate-100">
               <span>View</span>
               <ChevronRight size={12} className="transition-transform group-hover:translate-x-0.5" />
             </div>
@@ -204,7 +204,7 @@ export default function Overview({ onNavigate }: OverviewProps) {
         <button
           type="button"
           onClick={() => setFocusModeActive(true)}
-          className="text-xs text-slate-400 hover:text-slate-600 underline decoration-slate-300 underline-offset-2 transition-colors cursor-pointer"
+          className="text-xs text-slate-600 hover:text-slate-600 underline decoration-slate-300 underline-offset-2 transition-colors cursor-pointer"
         >
           Focus on one task
         </button>

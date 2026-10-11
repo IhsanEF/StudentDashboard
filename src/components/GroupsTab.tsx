@@ -997,7 +997,7 @@ export default function GroupsTab() {
                     <div
                       key={task.id}
                       className={`bg-white rounded-2xl border p-4 shadow-2xs transition-all hover:border-slate-300 ${
-                        isDone ? 'border-slate-200 opacity-75 bg-slate-50/50' : 'border-slate-200'
+                        isDone ? 'border-slate-200 bg-slate-50/50' : 'border-slate-200'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -1020,9 +1020,9 @@ export default function GroupsTab() {
 
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className={`text-sm font-bold ${isDone ? 'line-through text-slate-600' : 'text-slate-900'}`}>
+                              <h3 className={`text-sm font-bold ${isDone ? 'line-through text-slate-600' : 'text-slate-900'}`}>
                                 {task.title}
-                              </h4>
+                              </h3>
 
                               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                                 task.priority === 'Critical' ? 'bg-rose-100 text-rose-700' :
@@ -1073,7 +1073,7 @@ export default function GroupsTab() {
                                       aria-label={`${st.title} (${st.done ? 'completed' : 'not completed'})`}
                                       checked={st.done}
                                       onChange={() => handleToggleSubtaskDone(task, st.id)}
-                                      className="rounded text-blue-600 focus:ring-0 cursor-pointer"
+                                      className="rounded text-blue-600 focus:ring-2 cursor-pointer w-6 h-6 shrink-0"
                                     />
                                     <span className={st.done ? 'line-through text-slate-600' : 'text-slate-700'}>
                                       {st.title}
@@ -1147,7 +1147,7 @@ export default function GroupsTab() {
                         {(member.displayName || '?').substring(0, 2)}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900">{member.displayName || 'Student'}</h4>
+                        <h3 className="text-sm font-bold text-slate-900">{member.displayName || 'Student'}</h3>
                         <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
                           {member.role || 'Member'}
                         </span>

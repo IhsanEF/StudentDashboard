@@ -224,10 +224,10 @@ export default function ProgressTab() {
 
       {/* Currently Working Section */}
       <div>
-        <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
           <Clock size={20} className="text-blue-600" />
           Currently Working
-        </h3>
+        </h2>
         {working.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {working.map((task: Task) => (
@@ -244,10 +244,10 @@ export default function ProgressTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Course Completion & Grade Breakdown */}
         <div>
-          <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
             <TrendingUp size={20} className="text-indigo-600" />
             Course Progress & Performance
-          </h3>
+          </h2>
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-xs">
             {courseProgress.length > 0 ? (
               courseProgress.map(stat => (
@@ -297,10 +297,10 @@ export default function ProgressTab() {
 
         {/* Recently Completed Section */}
         <div>
-          <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
             <CheckCircle2 size={20} className="text-green-600" />
             Recently Completed
-          </h3>
+          </h2>
           <div className="space-y-3">
             {recentlyCompleted.length > 0 ? (
               recentlyCompleted.map(task => (

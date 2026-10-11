@@ -32,7 +32,7 @@ export default function Announcements() {
           <div
             key={item.task_id}
             className={`bg-white rounded-2xl border p-5 shadow-sm flex flex-col md:flex-row gap-4 md:items-center transition-all ${
-              isRead ? 'border-slate-200 opacity-75' : 'border-blue-200/80 ring-1 ring-blue-100'
+              isRead ? 'border-slate-200' : 'border-blue-200/80 ring-1 ring-blue-100'
             }`}
           >
             <div className={`p-3 rounded-xl shrink-0 self-start md:self-center ${isRead ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-600'}`}>
@@ -53,7 +53,7 @@ export default function Announcements() {
                   {isRead ? 'Read' : 'New'}
                 </span>
               </div>
-              <h4 className={`font-bold text-lg ${isRead ? 'text-slate-700' : 'text-slate-900'}`}>{item.title}</h4>
+              <h2 className={`font-bold text-lg ${isRead ? 'text-slate-700' : 'text-slate-900'}`}>{item.title}</h2>
               <p className="text-slate-600 text-sm mt-1 whitespace-pre-line">{item.summary}</p>
             </div>
 

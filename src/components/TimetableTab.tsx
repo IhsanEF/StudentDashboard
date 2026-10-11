@@ -818,7 +818,7 @@ export default function TimetableTab() {
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-[#002145]">Your week</h2>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5">
             Plan classes and study sessions, and check for overlapping exams.
           </p>
         </div>
@@ -1015,7 +1015,7 @@ export default function TimetableTab() {
                 className="grid border-b border-slate-200 bg-slate-100/70 text-center text-xs font-bold text-slate-700"
                 style={{ gridTemplateColumns: `64px repeat(${daysToRender.length}, minmax(0, 1fr))` }}
               >
-                <div className="py-2.5 border-r border-slate-200 text-slate-400 font-medium text-[11px]">Time</div>
+                <div className="py-2.5 border-r border-slate-200 text-slate-600 font-medium text-[11px]">Time</div>
                 {daysToRender.map((day) => (
                   <div key={day} className="py-2.5 border-r border-slate-200 last:border-r-0">
                     {day}
@@ -1035,7 +1035,7 @@ export default function TimetableTab() {
               >
                 {/* Time Axis Column */}
                 <div
-                  className="relative border-r border-slate-200 bg-slate-50/50 text-[11px] font-medium text-slate-400 select-none box-border"
+                  className="relative border-r border-slate-200 bg-slate-50/50 text-[11px] font-medium text-slate-600 select-none box-border"
                   style={{ height: `${gridHeight}px` }}
                 >
                   {Array.from({ length: totalHours }).map((_, idx) => {
@@ -1048,7 +1048,7 @@ export default function TimetableTab() {
                       </div>
                     );
                   })}
-                  <div className="absolute -bottom-2.5 left-2 text-[10px] text-slate-400 select-none pointer-events-none">
+                  <div className="absolute -bottom-2.5 left-2 text-[10px] text-slate-600 select-none pointer-events-none">
                     {endHourLabel}
                   </div>
                 </div>
@@ -1107,7 +1107,7 @@ export default function TimetableTab() {
                           >
                             <div>
                               <div className="flex items-center justify-between gap-1">
-                                <span className="font-bold text-[11px] leading-tight truncate" style={{ color: isInvalidTime ? '#dc2626' : itemColor }}>
+                                <span className="font-bold text-[11px] leading-tight truncate" style={{ color: isInvalidTime ? '#991b1b' : '#172033' }}>
                                   {item.course_code}
                                 </span>
                                 <div className="flex items-center gap-1 shrink-0">
@@ -1130,14 +1130,14 @@ export default function TimetableTab() {
                               </p>
                             </div>
 
-                            <div className="text-[9px] text-slate-500 font-medium space-y-0.5 mt-0.5">
+                            <div className="text-[9px] text-slate-600 font-medium space-y-0.5 mt-0.5">
                               <div className="flex items-center gap-1">
-                                <Clock size={10} className="text-slate-400 shrink-0" />
+                                <Clock size={10} className="text-slate-600 shrink-0" />
                                 <span className="truncate">{item.start_time} - {item.end_time}</span>
                               </div>
                               {item.location && (
                                 <div className="flex items-center gap-1 truncate">
-                                  <MapPin size={10} className="text-slate-400 shrink-0" />
+                                  <MapPin size={10} className="text-slate-600 shrink-0" />
                                   <span className="truncate">{item.location}</span>
                                 </div>
                               )}
@@ -1186,7 +1186,7 @@ export default function TimetableTab() {
                           <button
                             type="button"
                             onClick={() => setDeletingClassId(null)}
-                            className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 min-h-8 min-w-8 px-1 cursor-pointer"
+                            className="text-[11px] text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 min-h-8 min-w-8 px-1 cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -1198,7 +1198,7 @@ export default function TimetableTab() {
                               setEditingClass(c);
                               setIsClassModalOpen(true);
                             }}
-                            className="min-h-8 min-w-8 p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            className="min-h-8 min-w-8 p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-md text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
                             aria-label="Edit class"
                             title="Edit class"
                           >
@@ -1207,7 +1207,7 @@ export default function TimetableTab() {
                           <div className="w-[1px] h-3.5 bg-slate-200 dark:bg-slate-700" />
                           <button
                             onClick={() => setDeletingClassId(c.id)}
-                            className="min-h-8 min-w-8 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                            className="min-h-8 min-w-8 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md text-slate-600 hover:text-red-600 transition-colors cursor-pointer"
                             aria-label={`Delete class ${c.course_code}`}
                             title="Delete class"
                           >
@@ -1222,20 +1222,20 @@ export default function TimetableTab() {
 
                   <div className="mt-3 space-y-1.5 text-xs text-slate-600">
                     <div className="flex items-center gap-2">
-                      <CalendarIcon size={13} className="text-slate-400" />
+                      <CalendarIcon size={13} className="text-slate-600" />
                       <span className="font-medium text-slate-800">{c.day}s</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock size={13} className="text-slate-400" />
+                      <Clock size={13} className="text-slate-600" />
                       <span>{c.start_time} – {c.end_time}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <MapPin size={13} className="text-slate-400" />
+                      <MapPin size={13} className="text-slate-600" />
                       <span>{c.location || 'TBA'}</span>
                     </div>
                     {c.instructor && (
                       <div className="flex items-center gap-2">
-                        <User size={13} className="text-slate-400" />
+                        <User size={13} className="text-slate-600" />
                         <span>{c.instructor}</span>
                       </div>
                     )}
@@ -1246,9 +1246,9 @@ export default function TimetableTab() {
           </div>
 
           {effectiveClasses.length === 0 && (
-            <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-8 text-center text-slate-500">
+            <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-8 text-center text-slate-600">
               <p className="text-sm font-medium">No class blocks scheduled yet.</p>
-              <p className="text-xs text-slate-400 mt-1">Use &quot;AI Import&quot; or &quot;Add Class&quot; to populate your timetable.</p>
+              <p className="text-xs text-slate-600 mt-1">Use &quot;AI Import&quot; or &quot;Add Class&quot; to populate your timetable.</p>
             </div>
           )}
         </div>
@@ -1296,7 +1296,7 @@ export default function TimetableTab() {
                           <button
                             type="button"
                             onClick={() => setDeletingExamId(null)}
-                            className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 min-h-8 min-w-8 px-1 cursor-pointer"
+                            className="text-[11px] text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 min-h-8 min-w-8 px-1 cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -1308,7 +1308,7 @@ export default function TimetableTab() {
                               setEditingExam(ex);
                               setIsExamModalOpen(true);
                             }}
-                            className="min-h-8 min-w-8 p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            className="min-h-8 min-w-8 p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-md text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
                             aria-label="Edit exam"
                             title="Edit exam"
                           >
@@ -1317,7 +1317,7 @@ export default function TimetableTab() {
                           <div className="w-[1px] h-3.5 bg-slate-200 dark:bg-slate-700" />
                           <button
                             onClick={() => setDeletingExamId(ex.id)}
-                            className="min-h-8 min-w-8 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                            className="min-h-8 min-w-8 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md text-slate-600 hover:text-red-600 transition-colors cursor-pointer"
                             aria-label={`Delete exam ${ex.course_code}`}
                             title="Delete exam"
                           >
@@ -1330,19 +1330,19 @@ export default function TimetableTab() {
 
                   <div className="mt-4 grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
                     <div>
-                      <span className="text-[10px] text-slate-400 font-semibold block uppercase">Date</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block uppercase">Date</span>
                       <span className="font-bold text-slate-800">{formatVancouverDate(ex.date)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 font-semibold block uppercase">Time Window</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block uppercase">Time Window</span>
                       <span className="font-bold text-slate-800">{ex.start_time} – {ex.end_time}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 font-semibold block uppercase">Location</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block uppercase">Location</span>
                       <span className="font-medium text-slate-700">{ex.location || 'TBA'}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 font-semibold block uppercase">Notes</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block uppercase">Notes</span>
                       <span className="font-medium text-slate-700 truncate block">{ex.notes || 'None'}</span>
                     </div>
                   </div>
@@ -1352,9 +1352,9 @@ export default function TimetableTab() {
           </div>
 
           {effectiveExams.length === 0 && (
-            <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-8 text-center text-slate-500">
+            <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-8 text-center text-slate-600">
               <p className="text-sm font-medium">No final exams added yet.</p>
-              <p className="text-xs text-slate-400 mt-1">Add your exam schedule to detect clashes and track preparation.</p>
+              <p className="text-xs text-slate-600 mt-1">Add your exam schedule to detect clashes and track preparation.</p>
             </div>
           )}
         </div>
@@ -1445,7 +1445,7 @@ export default function TimetableTab() {
                           reader.readAsDataURL(file);
                         }
                       }}
-                      className="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-slate-800 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-slate-700 cursor-pointer"
+                      className="block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-slate-800 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-slate-700 cursor-pointer"
                     />
                     {importImageBase64 && (
                       <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
@@ -1480,7 +1480,7 @@ export default function TimetableTab() {
                           <div>
                             <span className="font-bold text-blue-900 dark:text-blue-400 mr-2">{c.course_code}</span>
                             <span className="text-slate-600 dark:text-slate-300 font-medium">{c.day}s {c.start_time} - {c.end_time}</span>
-                            <span className="text-slate-400 dark:text-slate-500 ml-2">({c.location || 'Campus'})</span>
+                            <span className="text-slate-600 dark:text-slate-500 ml-2">({c.location || 'Campus'})</span>
                           </div>
                           <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-semibold text-slate-700 dark:text-slate-300">{c.type}</span>
                         </div>
@@ -1497,7 +1497,7 @@ export default function TimetableTab() {
                           <div>
                             <span className="font-bold text-blue-900 dark:text-blue-400 mr-2">{ex.course_code}</span>
                             <span className="text-slate-700 dark:text-slate-300 font-medium">{formatVancouverDate(ex.date)} ({ex.start_time} - {ex.end_time})</span>
-                            <span className="text-slate-500 dark:text-slate-400 ml-2">[{ex.location}]</span>
+                            <span className="text-slate-600 dark:text-slate-400 ml-2">[{ex.location}]</span>
                           </div>
                           <span className="text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded font-bold">{ex.weight_percent}% Final</span>
                         </div>
