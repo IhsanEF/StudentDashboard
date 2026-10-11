@@ -10,3 +10,5 @@ bun.lockb
 !.env.example
 
 dev-dist/
+
+audit/work/

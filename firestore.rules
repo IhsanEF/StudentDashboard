@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Helper functions
     function isAuthenticated() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.email_verified == true;
     }
     
     function isOwner(userId) {
@@ -115,108 +115,74 @@ service cloud.firestore {
       }
     }
 
+    // Groups contain student names and descriptions. Invitations are redeemed
+    // through the authenticated server, never by listing the collection.
     match /groups/{groupId} {
-      // Members can read the group document; authenticated users can also read to look up by invite code
-      allow read: if isAuthenticated() && (
-        (request.auth.uid in resource.data.members) ||
-        (resource.data.invite_code is string && resource.data.invite_code != '')
-      );
-      
-      // Group creation rule:
-      // - Creator must be caller
-      // - members array must be strictly [request.auth.uid]
-      // - member_details map must contain only creator's uid key
-      // - member_details[request.auth.uid].uid must be request.auth.uid
-      // - invite_code must match the app's six-character UBC code
-      allow create: if isAuthenticated()
-        && request.resource.data.keys().hasOnly([
-          'id', 'name', 'course_code', 'description', 'created_by', 'created_at',
-          'updated_at', 'invite_code', 'members', 'member_details', 'target_date'
-        ])
-        && request.resource.data.created_by == request.auth.uid
-        && request.resource.data.members == [request.auth.uid]
-        && request.resource.data.member_details.keys().hasOnly([request.auth.uid])
-        && request.resource.data.member_details[request.auth.uid].uid == request.auth.uid
-        && request.resource.data.member_details[request.auth.uid].keys().hasOnly(['uid', 'displayName', 'role'])
-        && request.resource.data.member_details[request.auth.uid].displayName is string
-        && request.resource.data.member_details[request.auth.uid].role == 'owner'
-        && request.resource.data.members.size() <= 50
-        && request.resource.data.name is string
-        && request.resource.data.name.size() <= 200
-        && request.resource.data.course_code is string
-        && request.resource.data.course_code.size() <= 50
-        && (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 2000))
-        && (!('target_date' in request.resource.data) || (request.resource.data.target_date is string && request.resource.data.target_date.size() <= 50))
-        && request.resource.data.invite_code is string
-        && request.resource.data.invite_code.matches('^UBC[0-9]{3}$');
-
-      // Group update rule:
-      // 1. Existing members can update metadata without taking over ownership, changing created_at, or arbitrarily evicting others
-      // 2. Member updates cannot grow members (size <= existing size, removal/leave only)
-      // 3. Non-members can only self-join by appending their uid and adding their own member details
-      function isCreatorLeaving() {
+      function validGroup(data) {
+        return data.keys().hasOnly(['id', 'name', 'course_code', 'description', 'created_by', 'created_at', 'updated_at', 'invite_code', 'members', 'member_details', 'target_date'])
+          && data.id == groupId
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+          && data.course_code is string && data.course_code.size() <= 50
+          && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+          && (!('target_date' in data) || (data.target_date is string && data.target_date.size() <= 50))
+          && data.created_by is string && data.created_by.size() <= 128
+          && data.created_at is string && data.created_at.size() <= 40
+          && data.updated_at is string && data.updated_at.size() <= 40
+          && data.invite_code is string && data.invite_code.size() <= 40
+          && data.members is list && data.members.size() > 0 && data.members.size() <= 50
+          && data.created_by in data.members
+          && data.member_details is map
+          && data.member_details.keys().hasAll(data.members)
+          && data.members.hasAll(data.member_details.keys());
+      }
+      function creatorLeaving() {
         let remaining = resource.data.members.removeAll([request.auth.uid]);
         return resource.data.created_by == request.auth.uid
-          && request.auth.uid in resource.data.members
           && remaining.size() > 0
           && request.resource.data.members == remaining
           && request.resource.data.created_by == remaining[0]
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'member_details', 'created_by', 'updated_at'])
           && request.resource.data.member_details.diff(resource.data.member_details).affectedKeys().hasOnly([request.auth.uid, remaining[0]])
-          && !(request.auth.uid in request.resource.data.member_details)
           && request.resource.data.member_details[remaining[0]].diff(resource.data.member_details[remaining[0]]).affectedKeys().hasOnly(['role'])
           && request.resource.data.member_details[remaining[0]].role == 'owner';
       }
-
-      allow update: if isAuthenticated()
-        && request.resource.data.keys().hasOnly([
-          'id', 'name', 'course_code', 'description', 'created_by', 'created_at',
-          'updated_at', 'invite_code', 'members', 'member_details', 'target_date'
-        ])
-        && (request.resource.data.created_by == resource.data.created_by || isCreatorLeaving())
+      function metadataOnly() {
+        return request.resource.data.created_by == resource.data.created_by
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'course_code', 'description', 'target_date', 'updated_at']);
+      }
+      function memberLeaving() {
+        return resource.data.created_by != request.auth.uid
+          && request.resource.data.created_by == resource.data.created_by
+          && request.resource.data.members == resource.data.members.removeAll([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'member_details', 'updated_at'])
+          && request.resource.data.member_details.diff(resource.data.member_details).affectedKeys().hasOnly([request.auth.uid]);
+      }
+      function ownerRemovingMember() {
+        let removed = resource.data.members.removeAll(request.resource.data.members);
+        return resource.data.created_by == request.auth.uid
+          && request.resource.data.created_by == resource.data.created_by
+          && request.auth.uid in request.resource.data.members
+          && resource.data.members.hasAll(request.resource.data.members)
+          && removed.size() == 1
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'member_details', 'updated_at'])
+          && request.resource.data.member_details.diff(resource.data.member_details).affectedKeys().hasOnly(removed);
+      }
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.members;
+      allow create: if isAuthenticated() && validGroup(request.resource.data)
+        && request.resource.data.created_by == request.auth.uid
+        && request.resource.data.members == [request.auth.uid]
+        && request.resource.data.member_details[request.auth.uid].keys().hasOnly(['uid', 'displayName', 'role'])
+        && request.resource.data.member_details[request.auth.uid].uid == request.auth.uid
+        && request.resource.data.member_details[request.auth.uid].displayName is string
+        && request.resource.data.member_details[request.auth.uid].displayName.size() <= 200
+        && request.resource.data.member_details[request.auth.uid].role == 'owner'
+        && request.resource.data.invite_code.matches('^LMS-[A-F0-9]{24}$');
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.members
+        && validGroup(request.resource.data)
         && request.resource.data.created_at == resource.data.created_at
-        && (request.resource.data.created_by in request.resource.data.members)
-        && (!('invite_code' in resource.data) || request.resource.data.invite_code == resource.data.invite_code || resource.data.created_by == request.auth.uid)
-        && request.resource.data.name is string
-        && request.resource.data.name.size() <= 200
-        && request.resource.data.course_code is string
-        && request.resource.data.course_code.size() <= 50
-        && (!('description' in request.resource.data) || (request.resource.data.description is string && request.resource.data.description.size() <= 5000))
-        && (!('target_date' in request.resource.data) || (request.resource.data.target_date is string && request.resource.data.target_date.size() <= 50))
-        && (!('invite_code' in request.resource.data) || (request.resource.data.invite_code is string && request.resource.data.invite_code.matches('^[A-Z0-9]{3,10}$')))
-        && request.resource.data.members is list
-        && request.resource.data.members.size() <= 50
-        && (
-          // Existing member update: cannot grow members (removal/leave or keep same size)
-          (
-            (request.auth.uid in resource.data.members)
-            && request.resource.data.members.size() <= resource.data.members.size()
-            && (
-              request.resource.data.members.hasAll(resource.data.members) ||
-              (request.resource.data.members.size() == resource.data.members.size() - 1 && !(request.auth.uid in request.resource.data.members))
-            )
-          ) ||
-          // Self-join: non-member may only add themselves and their own member_details
-          (
-            !(request.auth.uid in resource.data.members)
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'member_details', 'updated_at'])
-            && request.resource.data.members.hasAll(resource.data.members)
-            && (request.auth.uid in request.resource.data.members)
-            && request.resource.data.members.size() == resource.data.members.size() + 1
-            && (!('member_details' in resource.data) || request.resource.data.member_details.keys().hasAll(resource.data.member_details.keys()))
-            && (!('member_details' in request.resource.data) || (
-              request.resource.data.member_details.diff(resource.data.member_details).affectedKeys().hasOnly([request.auth.uid])
-              && request.resource.data.member_details[request.auth.uid].uid == request.auth.uid
-              && request.resource.data.member_details[request.auth.uid].keys().hasOnly(['uid', 'displayName', 'role'])
-              && request.resource.data.member_details[request.auth.uid].displayName is string
-              && request.resource.data.member_details[request.auth.uid].role == 'member'
-            ))
-          )
-        );
-
-      // A former creator loses deletion rights when they leave the group.
-      allow delete: if isAuthenticated()
-        && resource.data.created_by == request.auth.uid
+        && request.resource.data.invite_code == resource.data.invite_code
+        && (metadataOnly() || creatorLeaving() || memberLeaving() || ownerRemovingMember());
+      allow delete: if isAuthenticated() && resource.data.created_by == request.auth.uid
         && request.auth.uid in resource.data.members;
 
       match /tasks/{taskId} {

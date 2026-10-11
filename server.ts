@@ -3,6 +3,11 @@ import { sanitizeUrl, checkIfDateIsPast, validateAndResolveUrl, clampNumber, fee
 export { sanitizeUrl, isPrivateOrReservedIp } from './server/lib';
 import express from 'express';
 import { mountFeedbackRoutes, sweepExpiredFeedback } from './server/feedback';
+import { mountGroupRoutes } from './server/groups';
+import { logDiagnostic } from './server/diagnostics';
+import { sweepAiUsage } from './server/usageCleanup';
+import { decodeUpload, validateImageUpload } from './server/uploads';
+import { diagnosticCode, telemetrySource } from './shared/diagnostics';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -11,7 +16,7 @@ import net from 'net';
 import cors from 'cors';
 import helmet from 'helmet';
 import { Agent, fetch as undiciFetch } from 'undici';
-import { Worker } from 'worker_threads';
+import { parseExcelInWorker } from './server/spreadsheets';
 import * as XLSX from 'xlsx';
 import { GoogleGenAI, Type } from '@google/genai';
 import ical from 'node-ical';
@@ -23,12 +28,12 @@ import firebaseConfig from './firebase-applet-config.json';
 
 // Fail fast on unhandled process errors (V3-395 & V4-044)
 process.on('unhandledRejection', (reason) => {
-  console.error('[UNHANDLED_REJECTION]', reason);
+  logDiagnostic('[UNHANDLED_REJECTION]', reason);
   process.exit(1);
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('[UNCAUGHT_EXCEPTION]', error);
+  logDiagnostic('[UNCAUGHT_EXCEPTION]', error);
   process.exit(1);
 });
 
@@ -62,18 +67,9 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
     return res.status(401).json({ error: 'Unauthorized: Empty token provided.' });
   }
 
-  // Support demo guest session with rate-limiting
+  // Demo mode is a local preview and must never consume paid server resources.
   if (token === 'demo-guest-token' || req.headers['x-demo-mode'] === 'true') {
-    const clientIp = getTrustedClientIp(req);
-    try {
-      if (!await checkRateLimit(`demo_ai_${clientIp}`, 20, 10 * 60 * 1000)) {
-        return res.status(429).json({ error: 'Demo processing limit reached. Sign in with Google for full access.' });
-      }
-    } catch {
-      return res.status(503).json({ error: 'Request limits could not be verified. Please try again later.' });
-    }
-    (req as any).user = { uid: `demo_${clientIp.replace(/[^a-zA-Z0-9]/g, '_')}`, email: 'demo@example.com', isDemo: true };
-    return next();
+    return res.status(403).json({ error: 'Sign in to use server features. Demo mode is a local preview.' });
   }
 
   try {
@@ -88,7 +84,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
     (req as any).user = decodedToken;
     next();
   } catch (err: any) {
-    console.error('Token verification error:', err.message);
+    logDiagnostic('Token verification error:', err.message);
     return res.status(401).json({ error: 'Unauthorized: Invalid or expired authentication token.' });
   }
 };
@@ -117,7 +113,7 @@ const requireFreshAuth = async (req: express.Request, res: express.Response, nex
     (req as any).user = decodedToken;
     next();
   } catch (err: any) {
-    console.error('Fresh token verification error:', err.code, err.message);
+    logDiagnostic('Fresh token verification error:', err.message);
     const isInvalidTokenError =
       err.code === 'auth/id-token-expired' ||
       err.code === 'auth/id-token-revoked' ||
@@ -234,7 +230,7 @@ async function generateGeminiContentWithFallback(ai: GoogleGenAI, params: any, s
       }
       if (isAiBillingUnavailable(err)) throw err;
       lastError = err;
-      console.warn(`[GEMINI_CALL_WARN] Model ${model} failed:`, err?.status || err?.message || err);
+      logDiagnostic(`[GEMINI_CALL_WARN] Model ${model} failed:`, err?.status || err?.message || err);
       // If temporary overload or rate limit, brief delay and try candidate
       if (err?.status === 503 || err?.status === 429) {
         await new Promise(r => setTimeout(r, 400));
@@ -260,6 +256,7 @@ const abortedAiSlots = new Set<string>();
 
 const MAX_DAILY_AI_REQUESTS = 100;
 const MAX_DAILY_MULTIMODAL_REQUESTS = 30;
+const MAX_GLOBAL_DAILY_AI_REQUESTS = 500;
 
 async function tryAcquireAiSlot(
   userId: string,
@@ -282,6 +279,7 @@ async function tryAcquireAiSlot(
     const rateDocRef = adminDb.collection('ai_rate_usage').doc(userId);
     const endpointRateRef = adminDb.collection('ai_rate_usage').doc(`${keyPrefix}_${userId}`);
     const concurrencyRef = adminDb.collection('ai_concurrency').doc('global');
+    const globalDailyRef = adminDb.collection('ai_daily_usage').doc(`global_${todayVancouverStr}`);
     // Atomically admit paid requests across Cloud Run instances. Failure to verify
     // quota must not fall back to an instance-local budget.
     const rejection = await Promise.race([
@@ -290,6 +288,7 @@ async function tryAcquireAiSlot(
         const rateSnap = await transaction.get(rateDocRef);
         const endpointRateSnap = await transaction.get(endpointRateRef);
         const concurrencySnap = await transaction.get(concurrencyRef);
+        const globalDailySnap = await transaction.get(globalDailyRef);
         const data = snap.data() || {};
         const rateData = rateSnap.data() || {};
         const now = Date.now();
@@ -305,16 +304,19 @@ async function tryAcquireAiSlot(
         const multimodalCount = Number(data.multimodalCount) || 0;
         if (recent.length >= 10) return 'Too many AI requests. Please wait a moment before trying again.';
         if (count >= MAX_DAILY_AI_REQUESTS) return 'Daily AI request budget reached (100 requests/day). Please try again tomorrow.';
+        const globalCount = Number(globalDailySnap.data()?.count) || 0;
+        if (globalCount >= MAX_GLOBAL_DAILY_AI_REQUESTS) return 'The app’s daily AI budget has been reached. You can still enter courses and tasks manually.';
         if (isMultimodal && multimodalCount >= MAX_DAILY_MULTIMODAL_REQUESTS) {
           return 'Daily syllabus and timetable extraction quota reached (30 extractions/day). Please try again tomorrow.';
         }
         transaction.set(quotaDocRef, {
           userId, date: todayVancouverStr, count: count + 1,
           multimodalCount: multimodalCount + (isMultimodal ? 1 : 0),
-          updatedAt: FieldValue.serverTimestamp()
+          updatedAt: FieldValue.serverTimestamp(), expiresAt: new Date(now + 2 * 86400000)
         }, { merge: true });
-        transaction.set(rateDocRef, { timestamps: [...recent, now] });
-        transaction.set(endpointRateRef, { timestamps: [...endpointRecent, now] });
+        transaction.set(globalDailyRef, { count: globalCount + 1, expiresAt: new Date(now + 2 * 86400000) });
+        transaction.set(rateDocRef, { timestamps: [...recent, now], expiresAt: new Date(now + 600000) });
+        transaction.set(endpointRateRef, { timestamps: [...endpointRecent, now], expiresAt: new Date(now + 600000) });
         transaction.set(concurrencyRef, { leases: [...leases, { id: slotId, userId, expiresAt: now + AI_LEASE_MS }] });
         return '';
       }),
@@ -328,7 +330,7 @@ async function tryAcquireAiSlot(
     }
     return slotId;
   } catch (err) {
-    console.error('[AI_QUOTA_CHECK_ERROR]', err);
+    logDiagnostic('[AI_QUOTA_CHECK_ERROR]', err);
     res.status(503).json({ error: 'AI request limits could not be verified. Please try again later.' });
     return null;
   } finally {
@@ -362,7 +364,7 @@ async function releaseAiSlot(slotId: string) {
     });
   } catch (err) {
     // Failing to release is conservative: the lease expires instead of allowing excess work.
-    console.error('[AI_SLOT_RELEASE_ERROR]', err);
+    logDiagnostic('[AI_SLOT_RELEASE_ERROR]', err);
   }
 }
 
@@ -492,92 +494,6 @@ export function matchGradeCategory(
   return { categoryId: undefined, isAmbiguous: isDeliverable };
 }
 
-function parseExcelInWorker(base64Data: string, timeoutMs: number = 10000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const workerScript = `
-      const { parentPort, workerData } = require('worker_threads');
-      const XLSX = require('xlsx');
-
-      try {
-        const buffer = Buffer.from(workerData.base64, 'base64');
-        if (buffer.length > 4 * 1024 * 1024) {
-          parentPort.postMessage({ success: false, error: 'Spreadsheet exceeds maximum allowed size (4MB).' });
-          return;
-        }
-
-        const workbook = XLSX.read(buffer, { type: 'buffer', dense: true });
-        let combinedSheetText = '';
-
-        const sheetNames = (workbook.SheetNames || []).slice(0, 5);
-        for (const sheetName of sheetNames) {
-          const worksheet = workbook.Sheets[sheetName];
-          if (!worksheet || combinedSheetText.length >= 100000) continue;
-
-          // Cap rows and columns before conversion to prevent ReDoS / memory exhaustion
-          if (worksheet['!ref']) {
-            const range = XLSX.utils.decode_range(worksheet['!ref']);
-            if (range.e.r > 500) range.e.r = 500;
-            if (range.e.c > 50) range.e.c = 50;
-            worksheet['!ref'] = XLSX.utils.encode_range(range);
-          }
-
-          const csv = XLSX.utils.sheet_to_csv(worksheet);
-          if (csv && csv.trim().length > 0) {
-            combinedSheetText += '\\n\\n=== Sheet: ' + sheetName + ' ===\\n' + csv.slice(0, 50000);
-          }
-        }
-
-        parentPort.postMessage({ success: true, text: combinedSheetText });
-      } catch (err) {
-        parentPort.postMessage({ success: false, error: 'Unable to parse spreadsheet. The file may be corrupt, password-protected, or in an unsupported format.' });
-      }
-    `;
-
-    const worker = new Worker(workerScript, {
-      eval: true,
-      workerData: { base64: base64Data },
-      resourceLimits: { maxOldGenerationSizeMb: 128 }
-    });
-
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        worker.terminate().catch(() => {});
-        reject(new Error('Excel processing timed out.'));
-      }
-    }, timeoutMs);
-
-    worker.on('message', (msg: any) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      worker.terminate().catch(() => {});
-      if (msg.success) {
-        resolve(msg.text);
-      } else {
-        reject(new Error(msg.error || 'Failed to parse Excel file'));
-      }
-    });
-
-    worker.on('error', (err: Error) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      worker.terminate().catch(() => {});
-      reject(err);
-    });
-
-    worker.on('exit', (code: number) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (code !== 0) {
-        reject(new Error(`Excel worker stopped with exit code ${code}`));
-      }
-    });
-  });
-}
 
 async function startServer() {
   const app = express();
@@ -585,8 +501,9 @@ async function startServer() {
   app.set('trust proxy', true);
   const PORT = Number(process.env.PORT) || 3000;
   setInterval(() => {
-    sweepRateLimits().catch(err => console.error('[RATE_LIMIT_CLEANUP_ERROR]', err));
+    sweepRateLimits().catch(err => logDiagnostic('[RATE_LIMIT_CLEANUP_ERROR]', err));
     sweepExpiredFeedback(getAdminFirestore()).catch(() => console.warn('[FEEDBACK_CLEANUP_ERROR] Cleanup will retry'));
+    sweepAiUsage(getAdminFirestore()).catch(error => logDiagnostic('[AI_USAGE_CLEANUP_ERROR]', error));
   }, 60_000).unref();
 
   // Security headers with Helmet (Step 23)
@@ -608,7 +525,7 @@ async function startServer() {
           ...(process.env.NODE_ENV === 'production' ? [] : ['ws://localhost:*', 'ws://127.0.0.1:*'])
         ],
         frameSrc: ["'self'", 'https://*.firebaseapp.com', 'https://accounts.google.com'],
-        frameAncestors: ["'self'", 'https://aistudio.google.com']
+        frameAncestors: ["'none'"]
       }
     },
     // CSP expresses the AI Studio framing exception; X-Frame-Options cannot.
@@ -650,7 +567,7 @@ async function startServer() {
       const buffer = Buffer.from(await fetchResponse.arrayBuffer());
       res.send(buffer);
     } catch (err) {
-      console.error('Failed to proxy /__/auth request:', err);
+      logDiagnostic('Failed to proxy /__/auth request:', err);
       res.status(502).send('Bad Gateway');
     }
   });
@@ -676,7 +593,7 @@ async function startServer() {
   }
   app.use(cors({
     origin: (origin, callback) => callback(null, !origin || allowedOrigins.has(origin)),
-    credentials: true,
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-mode']
   }));
@@ -707,6 +624,7 @@ async function startServer() {
 
   // Export full app package archive (zip / tarball)
   app.get(['/api/export-app-package', '/api/download-package'], (req, res) => {
+    if (process.env.NODE_ENV === 'production') return res.sendStatus(404);
     try {
       const isTar = req.query.format === 'tar' || req.path.endsWith('/tar');
       const filename = isTar ? 'app-package.tar.gz' : 'app-package.zip';
@@ -726,7 +644,7 @@ async function startServer() {
       const stream = fs.createReadStream(packagePath);
       stream.pipe(res);
     } catch (err: any) {
-      console.error('[EXPORT_PACKAGE_ERROR]', err);
+      logDiagnostic('[EXPORT_PACKAGE_ERROR]', err);
       res.status(500).json({ error: 'Failed to stream package archive' });
     }
   });
@@ -751,7 +669,7 @@ async function startServer() {
       ai = getAI();
     } catch (err: any) {
       const errorId = crypto.randomUUID();
-      console.error(`[AI_INIT_ERROR_${errorId}]`, err);
+      logDiagnostic(`[AI_INIT_ERROR_${errorId}]`, err);
       if (err.message === 'GEMINI_API_KEY_NOT_CONFIGURED') {
         return res.status(503).json({
           error: 'AI extraction is currently unavailable. Please try again later.', errorId
@@ -767,7 +685,9 @@ async function startServer() {
 
       if (excelBase64 || fileType === 'excel') {
         try {
-          const rawBase64 = (excelBase64 || imageBase64 || '').replace(/^data:[^;]+;base64,/, '');
+          const spreadsheet = decodeUpload(excelBase64 || imageBase64, 3 * 1024 * 1024);
+          if (!spreadsheet) return res.status(400).json({ error: 'Invalid spreadsheet data or file larger than 3MB.' });
+          const rawBase64 = spreadsheet.data;
           if (rawBase64.length > 4 * 1024 * 1024) {
             return res.status(400).json({ error: 'Excel file exceeds maximum allowed size (3MB).' });
           }
@@ -783,7 +703,7 @@ async function startServer() {
           );
         } catch (excelErr: any) {
           const errorId = crypto.randomUUID();
-          console.error(`[SPREADSHEET_PARSE_ERROR_${errorId}]`, excelErr);
+          logDiagnostic(`[SPREADSHEET_PARSE_ERROR_${errorId}]`, excelErr);
           return res.status(400).json({ error: 'Unable to parse spreadsheet. The file may be corrupt, password-protected, or in an unsupported format.', errorId });
         }
       } else if (imageBase64 && mimeType) {
@@ -799,9 +719,10 @@ async function startServer() {
           return res.status(400).json({ error: 'Unsupported file or image MIME type.' });
         }
 
-        const cleanBase64 = imageBase64.includes('base64,')
-          ? imageBase64.split('base64,')[1]
-          : imageBase64.replace(/^data:[^;]+;base64,/, '');
+        const validated = validateImageUpload(imageBase64, normalizedMime, 10 * 1024 * 1024);
+        if (!validated) return res.status(400).json({ error: 'The file contents do not match the selected image or PDF type.' });
+        normalizedMime = validated.mimeType;
+        const cleanBase64 = validated.data;
 
         promptContent.push('<untrusted_user_document>');
         promptContent.push({
@@ -1048,7 +969,7 @@ Provide concise, helpful summaries and next actions.`,
       });
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
-      console.error(`[AI_EXTRACT_ERROR_${errorId}]`, err);
+      logDiagnostic(`[AI_EXTRACT_ERROR_${errorId}]`, err);
       if (isAiBillingUnavailable(err)) {
         return res.status(503).json({ error: 'Course-outline extraction is currently unavailable. You can still add courses and tasks manually.', errorId });
       }
@@ -1273,7 +1194,7 @@ Rules:
             });
           }
         } catch (geminiErr: any) {
-          console.warn('[BREAKDOWN_GEMINI_FALLBACK] Using algorithmic fallback:', geminiErr?.message || geminiErr);
+          logDiagnostic('[BREAKDOWN_GEMINI_FALLBACK] Using algorithmic fallback:', geminiErr?.message || geminiErr);
         }
       }
 
@@ -1286,7 +1207,7 @@ Rules:
       });
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
-      console.error(`[BREAKDOWN_TASK_ERROR_${errorId}]`, err);
+      logDiagnostic(`[BREAKDOWN_TASK_ERROR_${errorId}]`, err);
       res.status(500).json({ error: 'Failed to break down task. Please try again.', errorId });
     } finally {
       if (aiSlotAcquired) await releaseAiSlot(aiSlotAcquired);
@@ -1349,7 +1270,7 @@ Provide a single realistic number of hours (can have decimals like 1.5, 3.5, 6, 
             source: 'gemini_ai'
           });
         } catch (geminiErr: any) {
-          console.warn('[EFFORT_ESTIMATE_FALLBACK]', geminiErr?.message || geminiErr);
+          logDiagnostic('[EFFORT_ESTIMATE_FALLBACK]', geminiErr?.message || geminiErr);
         }
       }
 
@@ -1364,7 +1285,7 @@ Provide a single realistic number of hours (can have decimals like 1.5, 3.5, 6, 
       });
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
-      console.error(`[EFFORT_ESTIMATE_ERROR_${errorId}]`, err);
+      logDiagnostic(`[EFFORT_ESTIMATE_ERROR_${errorId}]`, err);
       res.status(500).json({ error: 'Failed to estimate effort. Please try again.', errorId });
     } finally {
       if (aiSlotAcquired) await releaseAiSlot(aiSlotAcquired);
@@ -1387,7 +1308,7 @@ Provide a single realistic number of hours (can have decimals like 1.5, 3.5, 6, 
         const token = authHeader.split('Bearer ')[1]?.trim();
         if (token) {
           try {
-            const decoded = await getAuth().verifyIdToken(token);
+            const decoded = await getAuth().verifyIdToken(token, true);
             reporterUserId = decoded.uid;
             // Per-user rate limit: 15 per minute
             if (!await checkRateLimit(`err_user_${reporterUserId}`, 15, 60 * 1000)) {
@@ -1399,50 +1320,8 @@ Provide a single realistic number of hours (can have decimals like 1.5, 3.5, 6, 
         }
       }
 
-      const { message, stack, componentStack, source, url, timestamp } = req.body || {};
-
-      // Strict sanitization helper: enforces length cap and removes CR, LF, and control characters
-      const sanitize = (val: unknown, maxLen: number) =>
-        String(val || '')
-          .slice(0, maxLen)
-          .replace(/[\r\n\x00-\x1f\x7f-\x9f]+/g, ' ')
-          .trim();
-
-      let safeReportUrl = sanitize(url, 200);
-      if (/feeds\/calendars\/user_/i.test(safeReportUrl)) {
-        try {
-          safeReportUrl = new URL(safeReportUrl.replace(/^webcal:\/\//i, 'https://')).hostname;
-        } catch {
-          safeReportUrl = safeReportUrl.replace(/feeds\/calendars\/user_[A-Za-z0-9_-]+/g, 'feeds/calendars/user_[redacted]');
-        }
-      }
-
-      const cleanMessage = sanitize(message, 300).replace(/feeds\/calendars\/user_[A-Za-z0-9_-]+/g, 'feeds/calendars/user_[redacted]');
-      const cleanSource = sanitize(source, 40) || 'client';
-      const cleanTimestamp = sanitize(timestamp, 30) || new Date().toISOString();
-
-      const sanitizeTrace = (trace: unknown) => {
-        if (!trace) return undefined;
-        return String(trace)
-          .slice(0, 1000)
-          .replace(/feeds\/calendars\/user_[A-Za-z0-9_-]+/g, 'feeds/calendars/user_[redacted]')
-          .replace(/[\r\n]+/g, ' | ')
-          .replace(/[\x00-\x1f\x7f-\x9f]+/g, ' ')
-          .trim();
-      };
-
-      const logPayload = {
-        level: 'WARN',
-        type: 'CLIENT_TELEMETRY',
-        timestamp: cleanTimestamp,
-        clientIp,
-        userId: reporterUserId,
-        source: cleanSource,
-        message: cleanMessage,
-        url: safeReportUrl,
-        stack: sanitizeTrace(stack),
-        componentStack: sanitizeTrace(componentStack)
-      };
+      const logPayload = { level: 'WARN', type: 'CLIENT_TELEMETRY', timestamp: new Date().toISOString(),
+        source: telemetrySource(req.body?.source), errorCode: diagnosticCode(req.body?.errorCode) };
 
       console.warn(JSON.stringify(logPayload));
       res.json({ ok: true });
@@ -1566,7 +1445,7 @@ Parse this into a clean, structured student task:
             source: 'gemini'
           });
         } catch (geminiErr: any) {
-          console.warn('[QUICK_ADD_GEMINI_FALLBACK] Using natural language fallback:', geminiErr?.message || geminiErr);
+          logDiagnostic('[QUICK_ADD_GEMINI_FALLBACK] Using natural language fallback:', geminiErr?.message || geminiErr);
         }
       }
 
@@ -1579,7 +1458,7 @@ Parse this into a clean, structured student task:
       });
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
-      console.error(`[QUICK_ADD_ERROR_${errorId}]`, err);
+      logDiagnostic(`[QUICK_ADD_ERROR_${errorId}]`, err);
       res.status(500).json({ error: 'Failed to parse natural language task. Please check input and try again.', errorId });
     } finally {
       if (aiSlotAcquired) await releaseAiSlot(aiSlotAcquired);
@@ -1625,8 +1504,9 @@ Parse this into a clean, structured student task:
 
       const token = await getCalendarFeedToken(userId);
 
-      const host = req.get('host') || 'localhost:3000';
-      const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+      const origin = new URL(process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://mylmsapp.onrender.com');
+      const host = origin.host;
+      const protocol = origin.protocol.slice(0, -1);
       const feedUrl = `${protocol}://${host}/api/calendar/feed/${token}.ics`;
       const webcalUrl = `webcal://${host}/api/calendar/feed/${token}.ics`;
 
@@ -1638,7 +1518,7 @@ Parse this into a clean, structured student task:
       });
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
-      console.error(`[CALENDAR_TOKEN_ERROR_${errorId}]`, err);
+      logDiagnostic(`[CALENDAR_TOKEN_ERROR_${errorId}]`, err);
       res.status(500).json({ error: 'Failed to retrieve calendar subscription token.', errorId });
     }
   });
@@ -1651,8 +1531,9 @@ Parse this into a clean, structured student task:
 
       const newToken = await getCalendarFeedToken(userId, true);
 
-      const host = req.get('host') || 'localhost:3000';
-      const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+      const origin = new URL(process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://mylmsapp.onrender.com');
+      const host = origin.host;
+      const protocol = origin.protocol.slice(0, -1);
       const feedUrl = `${protocol}://${host}/api/calendar/feed/${newToken}.ics`;
       const webcalUrl = `webcal://${host}/api/calendar/feed/${newToken}.ics`;
 
@@ -1664,7 +1545,7 @@ Parse this into a clean, structured student task:
       });
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
-      console.error(`[CALENDAR_REVOKE_ERROR_${errorId}]`, err);
+      logDiagnostic(`[CALENDAR_REVOKE_ERROR_${errorId}]`, err);
       res.status(500).json({ error: 'Failed to revoke and regenerate calendar token.', errorId });
     }
   });
@@ -1774,7 +1655,7 @@ Parse this into a clean, structured student task:
         res.setHeader('Content-Disposition', 'inline; filename="my-lms-deadlines.ics"');
         res.setHeader('ETag', cached.etag);
         res.setHeader('Last-Modified', cached.lastModified.toUTCString());
-        res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+        res.setHeader('Cache-Control', 'private, no-store, max-age=0');
         return res.send(cached.ics);
       }
 
@@ -1824,7 +1705,7 @@ Parse this into a clean, structured student task:
           batchCount++;
         }
       } catch (queryErr) {
-        console.warn('[CALENDAR_FEED_RANGE_FALLBACK]', queryErr);
+        logDiagnostic('[CALENDAR_FEED_RANGE_FALLBACK]', queryErr);
         try {
           const fallbackSnapshot = await adminDb
             .collection('users')
@@ -1852,11 +1733,11 @@ Parse this into a clean, structured student task:
       // Fetch exams and recurring classes for this user (Item 1)
       const [examsSnapshot, classesSnapshot] = await Promise.all([
         adminDb.collection('users').doc(userId).collection('exams').limit(200).get().catch(err => {
-          console.warn('[CALENDAR_FEED_EXAMS_QUERY_WARN]', err);
+          logDiagnostic('[CALENDAR_FEED_EXAMS_QUERY_WARN]', err);
           return null;
         }),
         adminDb.collection('users').doc(userId).collection('classes').limit(100).get().catch(err => {
-          console.warn('[CALENDAR_FEED_CLASSES_QUERY_WARN]', err);
+          logDiagnostic('[CALENDAR_FEED_CLASSES_QUERY_WARN]', err);
           return null;
         })
       ]);
@@ -1888,7 +1769,7 @@ Parse this into a clean, structured student task:
         try {
           icsContent.push(...buildTaskVevent(t, nowUtcString, Math.random().toString(36).slice(2)));
         } catch (taskErr) {
-          console.warn('[CALENDAR_FEED_TASK_SKIP]', taskErr);
+          logDiagnostic('[CALENDAR_FEED_TASK_SKIP]', taskErr);
           continue;
         }
       }
@@ -1960,7 +1841,7 @@ Parse this into a clean, structured student task:
             icsContent.push('STATUS:CONFIRMED');
             icsContent.push('END:VEVENT');
           } catch (examErr) {
-            console.warn('[CALENDAR_FEED_EXAM_SKIP]', examErr);
+            logDiagnostic('[CALENDAR_FEED_EXAM_SKIP]', examErr);
           }
         });
       }
@@ -2057,7 +1938,7 @@ Parse this into a clean, structured student task:
             icsContent.push('STATUS:CONFIRMED');
             icsContent.push('END:VEVENT');
           } catch (classErr) {
-            console.warn('[CALENDAR_FEED_CLASS_SKIP]', classErr);
+            logDiagnostic('[CALENDAR_FEED_CLASS_SKIP]', classErr);
           }
         });
       }
@@ -2074,12 +1955,13 @@ Parse this into a clean, structured student task:
         cachedAt: Date.now()
       });
 
-      // Cleanup cache if it exceeds 2000 entries
-      if (feedCache.size > 2000) {
-        const cutoff = Date.now() - FEED_CACHE_TTL_MS;
-        for (const [k, v] of feedCache.entries()) {
-          if (v.cachedAt < cutoff) feedCache.delete(k);
-        }
+      let cacheBytes = 0;
+      for (const value of feedCache.values()) cacheBytes += Buffer.byteLength(value.ics);
+      while (feedCache.size > 100 || cacheBytes > 8 * 1024 * 1024) {
+        const oldest = feedCache.keys().next().value;
+        if (!oldest) break;
+        cacheBytes -= Buffer.byteLength(feedCache.get(oldest)!.ics);
+        feedCache.delete(oldest);
       }
 
       if (ifNoneMatch && (ifNoneMatch === etag || ifNoneMatch === `W/${etag}`)) {
@@ -2090,11 +1972,11 @@ Parse this into a clean, structured student task:
       res.setHeader('Content-Disposition', 'inline; filename="my-lms-deadlines.ics"');
       res.setHeader('ETag', etag);
       res.setHeader('Last-Modified', now.toUTCString());
-      res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+      res.setHeader('Cache-Control', 'private, no-store, max-age=0');
       res.send(finalIcs);
     } catch (err: any) {
       const errorId = crypto.randomUUID();
-      console.error(`[CALENDAR_FEED_SERVE_ERROR_${errorId}]`, err);
+      logDiagnostic(`[CALENDAR_FEED_SERVE_ERROR_${errorId}]`, err);
       res.status(503).type('text/plain').send(`Calendar feed temporarily unavailable. Error ID: ${errorId}`);
     }
   });
@@ -2128,9 +2010,10 @@ Parse this into a clean, structured student task:
         if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(mimeType)) {
           return res.status(400).json({ error: 'Unsupported timetable image MIME type. Upload PNG, JPEG, or WEBP.' });
         }
-        const cleanBase64 = imageBase64.includes('base64,')
-          ? imageBase64.split('base64,')[1]
-          : imageBase64.replace(/^data:[^;]+;base64,/, '');
+        const validated = validateImageUpload(imageBase64, mimeType, 3 * 1024 * 1024);
+        if (!validated) return res.status(400).json({ error: 'The timetable file contents do not match its image type.' });
+        mimeType = validated.mimeType;
+        const cleanBase64 = validated.data;
 
         promptContent.push('<untrusted_user_document>');
         promptContent.push({
@@ -2322,7 +2205,7 @@ CRITICAL ACCURACY MANDATES:
           });
         } catch (geminiErr: any) {
           const errorId = crypto.randomUUID();
-          console.error(`[PARSE_TIMETABLE_AI_ERROR_${errorId}]`, geminiErr);
+          logDiagnostic(`[PARSE_TIMETABLE_AI_ERROR_${errorId}]`, geminiErr);
           return res.status(503).json({ error: 'AI extraction is currently unavailable. Please try again later.', errorId });
         }
       }
@@ -2332,7 +2215,7 @@ CRITICAL ACCURACY MANDATES:
       });
     } catch (err: any) {
       const errorId = Math.random().toString(36).substring(2, 10);
-      console.error(`[PARSE_TIMETABLE_ERROR_${errorId}]`, err);
+      logDiagnostic(`[PARSE_TIMETABLE_ERROR_${errorId}]`, err);
       res.status(500).json({ error: 'Failed to extract timetable data. Please try again.', errorId });
     } finally {
       if (aiSlotAcquired) await releaseAiSlot(aiSlotAcquired);
@@ -2341,6 +2224,7 @@ CRITICAL ACCURACY MANDATES:
 
   // Catch-all 404 handler for unknown API routes (Step 23)
   mountFeedbackRoutes(app, { authenticate: requireAuth, db: getAdminFirestore, rateLimit: checkRateLimit });
+  mountGroupRoutes(app, { authenticate: requireAuth, db: getAdminFirestore, rateLimit: checkRateLimit });
   app.all(['/api', '/api/*all'], (req, res) => res.status(404).json({ error: 'Not found' }));
 
 
@@ -2460,7 +2344,7 @@ CRITICAL ACCURACY MANDATES:
   // Terminal handler also covers non-API middleware and static-file errors.
   app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
     const errorId = crypto.randomUUID();
-    console.error(`[REQUEST_ERROR_${errorId}]`, err);
+    logDiagnostic(`[REQUEST_ERROR_${errorId}]`, err);
     if (res.headersSent) return next(err);
     const status = err.status === 403 ? 403
       : err.type === 'entity.too.large' ? 413
@@ -2477,7 +2361,7 @@ CRITICAL ACCURACY MANDATES:
   });
 
   server.on('error', (e) => {
-    console.error('[SERVER_LISTEN_ERROR]', e);
+    logDiagnostic('[SERVER_LISTEN_ERROR]', e);
     process.exit(1);
   });
 }
@@ -2485,7 +2369,7 @@ CRITICAL ACCURACY MANDATES:
 const isMain = process.argv[1] && (process.argv[1].endsWith('server.ts') || process.argv[1].endsWith('server.cjs'));
 if (isMain && process.env.NODE_ENV !== 'test') {
   startServer().catch((e) => {
-    console.error('[START_SERVER_FATAL_ERROR]', e);
+    logDiagnostic('[START_SERVER_FATAL_ERROR]', e);
     process.exit(1);
   });
 }
