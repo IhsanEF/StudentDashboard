@@ -951,14 +951,14 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                 </button>
               </div>
 
-              <button
+              {import.meta.env?.DEV && <button
                 type="button"
                 onClick={() => { setIsMobileMoreOpen(false); handleDownloadCodePackage(); }}
                 className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-[#002145] hover:bg-blue-900 text-white text-xs font-bold transition cursor-pointer min-h-[44px]"
               >
                 <Download size={16} className="text-emerald-300" />
                 <span>Export Full App Package (.zip)</span>
-              </button>
+              </button>}
 
               <div className="grid grid-cols-2 gap-2">
                 <button
