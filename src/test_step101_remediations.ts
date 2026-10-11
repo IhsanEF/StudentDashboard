@@ -24,6 +24,6 @@ assert(taskCardContent.includes('min-h-[28px] inline-flex items-center'), "Edit 
 // - Subtask checkbox toggle has min-w-[24px] min-h-[24px]
 assert(taskCardContent.includes('min-w-[24px] min-h-[24px]'), "Subtask checkbox toggle must meet at least 24px floor");
 // - Action row buttons have min-h-[36px]
-assert(taskCardContent.includes('min-h-[36px] cursor-pointer text-center flex items-center justify-center'), "Action row buttons must meet at least min-h-[36px]");
+assert(/<select[\s\S]*?className="min-h-11/.test(taskCardContent), "Status selection must have a 44px touch target");
 
 console.log('Step 101 Remediations verified successfully!');
