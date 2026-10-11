@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { inflateRawSync } from 'node:zlib';
+import * as XLSX from 'xlsx';
+import { decodeUpload, validateImageUpload, validateWorkbookZip } from './uploads';
+import { parseExcelInWorker } from './spreadsheets';
+const workbook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Course','Due'],['Math','2026-11-01']]), 'Outline');
+const archive = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx', compression: true }) as Buffer;
+assert.equal(validateWorkbookZip(archive, inflateRawSync), true);
+assert.match(await parseExcelInWorker(archive.toString('base64')), /Math,2026-11-01/);
+assert.match(await parseExcelInWorker(Buffer.from('Course,Due\nMath,2026-11-01').toString('base64')), /Math,2026-11-01/);
+for (const invalid of ['!!!!', 'YWJj=', 'data:text/plain;base64,!!!!']) assert.equal(decodeUpload(invalid, 100), null);
+assert.equal(decodeUpload(Buffer.alloc(101).toString('base64'), 100), null);
+assert.equal(validateImageUpload(Buffer.from('<script>bad</script>').toString('base64'), 'image/png', 100), null);
+const pdf = Buffer.from('%PDF-1.7\nDocument');
+assert.ok(validateImageUpload(pdf.toString('base64'), 'application/pdf', 100));
+assert.equal(validateImageUpload('data:image/png;base64,'+pdf.toString('base64'), 'application/pdf', 100), null);
+const corrupt = Buffer.from(archive);
+const entry = corrupt.indexOf(Buffer.from([0x50,0x4b,0x01,0x02]));
+corrupt.writeUInt32LE(1, entry + 24); // Inflated content exceeds its forged declaration.
+assert.equal(validateWorkbookZip(corrupt, inflateRawSync), false);
+await assert.rejects(parseExcelInWorker(corrupt.toString('base64')), /Unable to parse/);
+await assert.rejects(parseExcelInWorker(Buffer.from('<html>not a course outline</html>').toString('base64')), /Unable to parse/);
+await assert.rejects(parseExcelInWorker(archive.toString('base64'), 1), /timed out/);
+console.log('Upload signatures, canonical encoding, archive inflation bounds, valid XLSX/CSV, HTML rejection and worker timeout passed.');

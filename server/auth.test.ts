@@ -32,7 +32,7 @@ let invalidToken = false;
 const code = await transform(`${authCode}\n${security};\n${retiredFeedRoute};\napp.get('/normal', requireAuth, (_req, res) => res.sendStatus(204));
 app.get('/fresh', requireFreshAuth, (_req, res) => res.sendStatus(204));`, { loader: 'ts' });
 runInNewContext(code.code, {
-  app, helmet, process: { env: { NODE_ENV: 'production' } }, console: { error() {} },
+  app, helmet, logDiagnostic() {}, process: { env: { NODE_ENV: 'production' } }, console: { error() {} },
   getAuth: () => ({ verifyIdToken: async (...args: any[]) => {
     verifications.push(args);
     if (invalidToken) throw { code: 'auth/id-token-revoked', message: 'revoked' };
@@ -49,6 +49,9 @@ try {
   assert.equal(verifications.length, 0, 'Retired feed route never connects to Firebase or a remote feed');
   for (const route of ['/normal', '/fresh']) {
     assert.equal((await fetch(origin + route)).status, 401);
+    invalidToken = true;
+    assert.equal((await fetch(origin + route, { headers: { Authorization: 'Bearer garbage' } })).status, 401);
+    invalidToken = false;
     for (const provider of ['google.com', 'password', 'anonymous', 'custom', undefined]) {
       for (const verified of [true, false]) {
         token = { uid: 'existing-user', firebase: { sign_in_provider: provider }, email_verified: verified };
@@ -65,6 +68,7 @@ try {
     invalidToken = false;
   }
   assert.ok(verifications.every(call => call[1] === true), 'Every protected route still checks revocation');
+  assert.equal((await fetch(origin + '/normal', { headers: { Authorization: 'Bearer demo-guest-token' } })).status, 403, 'Demo previews cannot consume server resources');
 } finally {
   await new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
 }

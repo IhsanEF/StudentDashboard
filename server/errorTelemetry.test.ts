@@ -6,6 +6,7 @@ import ts from 'typescript';
 import express from 'express';
 import net from 'node:net';
 import crypto from 'node:crypto';
+import { diagnosticCode, telemetrySource } from '../shared/diagnostics';
 
 // Mount the current production route and limiter, with only Firebase storage/auth replaced.
 const sourceText = readFileSync('server.ts', 'utf8');
@@ -23,7 +24,7 @@ const db = { collection: () => ({ doc: (id: string) => id }), runTransaction: as
   get: async (id: string) => ({ data: () => storage.get(id) }), set: (id: string, data: any) => storage.set(id, data)
 }) };
 const code = (await transform(`${functions.join('\n')}\n${route};\nglobalThis.clientIp = getTrustedClientIp;`, { loader: 'ts' })).code;
-const env: any = { app, net, crypto, getAdminFirestore: () => db, jsonParser4kb: express.json({ limit: '4kb' }),
+const env: any = { app, net, crypto, diagnosticCode, telemetrySource, getAdminFirestore: () => db, jsonParser4kb: express.json({ limit: '4kb' }),
   getAuth: () => ({ verifyIdToken: async () => { throw new Error('invalid token'); } }),
   console: { warn: (report: string) => reports.push(JSON.parse(report)) } };
 runInNewContext(code, env);
@@ -46,7 +47,7 @@ try {
   const limited = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '1.1.1.1' }, body: '{}' });
   assert.equal(limited.status, 429, 'Rotating forwarded headers cannot bypass the limit');
   assert.equal(reports.length, 10); assert.ok(reports.every(r => r.source === 'TaskProvider.listener.tasks'));
-  assert.ok(reports.every(r => !r.message.includes('\n') && !r.message.includes('user_secret')));
+  assert.ok(reports.every(r => !('message' in r) && !('stack' in r) && !('url' in r) && !('userId' in r) && !('clientIp' in r)));
   storage.clear();
   const oversized = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'x'.repeat(4096) }) });
   assert.equal(oversized.status, 413); assert.equal(reports.length, 10, 'Oversized bodies never produce logs');
