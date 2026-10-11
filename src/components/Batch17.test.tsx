@@ -143,7 +143,7 @@ const rules = readFileSync('firestore.rules', 'utf8');
 const courseRules = rules.slice(rules.indexOf('match /courses/{courseId}'), rules.indexOf('match /classes/{classId}'));
 assert.match(courseRules, /allow create, update: if isOwner\(userId\)/);
 assert.match(rules, /function isOwner\(userId\)\s*\{\s*return isAuthenticated\(\) && request.auth.uid == userId;/);
-assert.match(rules, /function isAuthenticated\(\)\s*\{\s*return request.auth != null;/);
+assert.match(rules, /function isAuthenticated\(\)\s*\{\s*return request.auth != null && request.auth.token.email_verified == true;/);
 assert.match(courseRules, /keys\(\).hasOnly/);
 assert.match(courseRules, /credits is number && request.resource.data.credits >= 0 && request.resource.data.credits <= 30/);
 assert.equal('credits' in normalizeCourse({ ...course, credits: 31 }, course.id), false);

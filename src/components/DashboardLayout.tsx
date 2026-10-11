@@ -450,7 +450,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             <span>Sign out</span>
           </button>
 
-          <PWAInstallButton variant="outline" className="w-full" />
+          <PWAInstallButton variant="outline" className="w-full" hintClassName="text-blue-200" />
 
           <button
             type="button"
@@ -471,7 +471,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             <span>Privacy & AI</span>
           </button>
 
-          <button
+          {import.meta.env?.DEV && <button
             type="button"
             id="sidebar-export-codebase-btn"
             onClick={handleDownloadCodePackage}
@@ -482,7 +482,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
           >
             <Download size={12} />
             <span>{isExportingPackage ? 'Exporting...' : 'Export Codebase (.zip)'}</span>
-          </button>
+          </button>}
         </div>
       </nav>
       )}
@@ -685,7 +685,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             {!isFocusModeActive && !uiPrefs.seenViewNotice && (
               <aside
                 aria-label="View mode notice"
-                className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50/60 border border-blue-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-950 shadow-2xs animate-in fade-in"
+                className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50/60 border border-blue-200/80 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-950 shadow-2xs animate-in fade-in"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-[#002145] text-amber-400 flex items-center justify-center shrink-0 shadow-xs">
@@ -697,7 +697,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
                     </span>
                     <p className="text-slate-600 text-xs mt-0.5">
                       {isSimpleView
-                        ? 'Focusing on coursework essentials: due dates, courses and grades. Switch to Detailed view in the sidebar or menu any time to open workload, timetable and collaboration tools.'
+                        ? 'Courses, deadlines and grades. Open Detailed view in the menu for more tools.'
                         : 'Detailed view is active with full access to workload distribution, schedule timetable, group projects, and grade planning tools.'}
                     </p>
                   </div>
@@ -721,6 +721,7 @@ export default function DashboardLayout({ children, activeTab, onTabChange, user
             ) : (
               children
             )}
+            <footer className="text-center text-xs text-slate-600 py-4"><a href="/accessibility.html" className="underline">Accessibility</a></footer>
           </div>
         </div>
       </main>

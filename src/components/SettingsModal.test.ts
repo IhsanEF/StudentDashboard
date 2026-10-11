@@ -166,7 +166,7 @@ const dbBundle = await build({ entryPoints: ['src/services/db.ts'], bundle: true
   platform: 'node', format: 'cjs', plugins: [{ name: 'backup-reads', setup(b) {
     b.onResolve({ filter: /^firebase\/firestore$|^\.\.\/auth$/ }, args => ({ path: args.path, namespace: 'backup-boundary' }));
     b.onLoad({ filter: /.*/, namespace: 'backup-boundary' }, ({ path }) => ({ contents: path === '../auth'
-      ? 'export const db = {};'
+      ? 'export const db = {}; export const getAuthHeader=async()=>({});'
       : `export const collection=()=>({}),doc=()=>({}),getDoc=(...a)=>globalThis.reads.getDoc(...a),getDocs=(...a)=>globalThis.reads.getDocs(...a);
          export const setDoc=()=>{},updateDoc=()=>{},deleteDoc=()=>{},deleteField=()=>{},onSnapshot=()=>{},serverTimestamp=()=>{},writeBatch=()=>{},runTransaction=()=>{},query=()=>{},where=()=>{},limit=()=>{};` }));
   } }] });

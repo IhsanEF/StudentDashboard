@@ -11,7 +11,7 @@ interface TasksListProps {
 }
 
 export default function TasksList({ initialGroup }: TasksListProps = {}) {
-  const { tasks, now, openImport, setFocusModeActive } = useTasksContext();
+  const { tasks, now, openImport, setFocusModeActive, uiPrefs } = useTasksContext();
   const [search, setSearch] = useState('');
   const [filterCourse, setFilterCourse] = useState('All');
   const [filterBucket, setFilterBucket] = useState<string | null>(initialGroup || null);
@@ -168,6 +168,12 @@ export default function TasksList({ initialGroup }: TasksListProps = {}) {
             : grouped
         ).map(([groupName, groupTasks]) => {
           if (groupTasks.length === 0) return null;
+          if (groupName === 'Later' && uiPrefs?.viewMode !== 'detailed' && !filterBucket && !search && filterCourse === 'All') {
+            return <details key={groupName} id={getGroupId(groupName)} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <summary className="cursor-pointer text-sm font-bold text-slate-700 min-h-11 flex items-center">Later ({groupTasks.length}) — show tasks</summary>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4">{groupTasks.map(task => <TaskCard key={task.task_id} task={task} />)}</div>
+            </details>;
+          }
           return (
             <section key={groupName} id={getGroupId(groupName)}>
               <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wider mb-4 flex items-center gap-2">

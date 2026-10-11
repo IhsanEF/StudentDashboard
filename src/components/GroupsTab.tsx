@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTasksContext } from '../hooks/useTasks';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { auth, db } from '../auth';
+import { upgradeGroupInvite, deleteFirestoreGroupProject } from '../services/db';
 import { doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import { GroupProject, GroupTask, GroupMember, TaskPriority, GroupTaskStatus, TaskStatus } from '../types';
 import { getCourseColor, formatInTimeZone, formatVancouverDate, zonedTimeToUtc, TIMEZONE } from '../utils';
@@ -253,9 +254,20 @@ export default function GroupsTab() {
   const handleCopyInviteCode = async () => {
     if (!currentGroup?.invite_code) return;
     setCopiedCode(false);
+    let code = currentGroup.invite_code;
+    try {
+      if (!isDemoMode && !/^LMS-[A-F0-9]{24}$/.test(code)) {
+        if (!isOwner) { showToast({ message: 'Ask the group owner to copy a new secure invite code.' }); return; }
+        code = await upgradeGroupInvite(currentGroup.id);
+        setLocalExtraGroups(previous => [{ ...currentGroup, invite_code: code }, ...previous.filter(group => group.id !== currentGroup.id)]);
+      }
+    } catch {
+      showToast({ message: 'Could not update the invitation. Please try again.' });
+      return;
+    }
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(currentGroup.invite_code);
+      await navigator.clipboard.writeText(code);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     } catch {
@@ -432,14 +444,11 @@ export default function GroupsTab() {
 
     try {
       if (!isDemoMode && auth.currentUser?.uid) {
-        try {
-          await deleteDoc(doc(db, 'groups', currentGroup.id));
-        } catch (err) {
-          console.warn('Firestore deleteDoc group error:', err);
-        }
+        await deleteFirestoreGroupProject(currentGroup.id);
       }
-      await leaveGroup(currentGroup.id);
+      if (isDemoMode) await leaveGroup(currentGroup.id);
       setLocalExtraGroups(prev => prev.filter(g => g.id !== currentGroup.id));
+      setActiveGroupId(null);
       showToast({ message: `Group "${currentGroup.name}" deleted.` });
     } catch (err: any) {
       console.error('Failed to delete group:', err);
