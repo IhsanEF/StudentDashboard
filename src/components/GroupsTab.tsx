@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTasksContext } from '../hooks/useTasks';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { auth, db } from '../auth';
+import { upgradeGroupInvite, deleteFirestoreGroupProject } from '../services/db';
 import { doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import { GroupProject, GroupTask, GroupMember, TaskPriority, GroupTaskStatus, TaskStatus } from '../types';
 import { getCourseColor, formatInTimeZone, formatVancouverDate, zonedTimeToUtc, TIMEZONE } from '../utils';
@@ -253,9 +254,20 @@ export default function GroupsTab() {
   const handleCopyInviteCode = async () => {
     if (!currentGroup?.invite_code) return;
     setCopiedCode(false);
+    let code = currentGroup.invite_code;
+    try {
+      if (!isDemoMode && !/^LMS-[A-F0-9]{24}$/.test(code)) {
+        if (!isOwner) { showToast({ message: 'Ask the group owner to copy a new secure invite code.' }); return; }
+        code = await upgradeGroupInvite(currentGroup.id);
+        setLocalExtraGroups(previous => [{ ...currentGroup, invite_code: code }, ...previous.filter(group => group.id !== currentGroup.id)]);
+      }
+    } catch {
+      showToast({ message: 'Could not update the invitation. Please try again.' });
+      return;
+    }
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(currentGroup.invite_code);
+      await navigator.clipboard.writeText(code);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     } catch {
@@ -432,14 +444,11 @@ export default function GroupsTab() {
 
     try {
       if (!isDemoMode && auth.currentUser?.uid) {
-        try {
-          await deleteDoc(doc(db, 'groups', currentGroup.id));
-        } catch (err) {
-          console.warn('Firestore deleteDoc group error:', err);
-        }
+        await deleteFirestoreGroupProject(currentGroup.id);
       }
-      await leaveGroup(currentGroup.id);
+      if (isDemoMode) await leaveGroup(currentGroup.id);
       setLocalExtraGroups(prev => prev.filter(g => g.id !== currentGroup.id));
+      setActiveGroupId(null);
       showToast({ message: `Group "${currentGroup.name}" deleted.` });
     } catch (err: any) {
       console.error('Failed to delete group:', err);
@@ -988,7 +997,7 @@ export default function GroupsTab() {
                     <div
                       key={task.id}
                       className={`bg-white rounded-2xl border p-4 shadow-2xs transition-all hover:border-slate-300 ${
-                        isDone ? 'border-slate-200 opacity-75 bg-slate-50/50' : 'border-slate-200'
+                        isDone ? 'border-slate-200 bg-slate-50/50' : 'border-slate-200'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -1011,9 +1020,9 @@ export default function GroupsTab() {
 
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className={`text-sm font-bold ${isDone ? 'line-through text-slate-600' : 'text-slate-900'}`}>
+                              <h3 className={`text-sm font-bold ${isDone ? 'line-through text-slate-600' : 'text-slate-900'}`}>
                                 {task.title}
-                              </h4>
+                              </h3>
 
                               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                                 task.priority === 'Critical' ? 'bg-rose-100 text-rose-700' :
@@ -1064,7 +1073,7 @@ export default function GroupsTab() {
                                       aria-label={`${st.title} (${st.done ? 'completed' : 'not completed'})`}
                                       checked={st.done}
                                       onChange={() => handleToggleSubtaskDone(task, st.id)}
-                                      className="rounded text-blue-600 focus:ring-0 cursor-pointer"
+                                      className="rounded text-blue-600 focus:ring-2 cursor-pointer w-6 h-6 shrink-0"
                                     />
                                     <span className={st.done ? 'line-through text-slate-600' : 'text-slate-700'}>
                                       {st.title}
@@ -1138,7 +1147,7 @@ export default function GroupsTab() {
                         {(member.displayName || '?').substring(0, 2)}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900">{member.displayName || 'Student'}</h4>
+                        <h3 className="text-sm font-bold text-slate-900">{member.displayName || 'Student'}</h3>
                         <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
                           {member.role || 'Member'}
                         </span>

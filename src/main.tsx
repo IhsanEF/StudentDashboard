@@ -18,3 +18,8 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>
 );
 
+
+// Local audit tooling is excluded entirely from production builds.
+if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('audit')) {
+  void import('./audit-tools').then(module => module.installAuditTools());
+}

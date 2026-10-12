@@ -32,7 +32,7 @@ export default function EmailVerification({ email, verificationSent, onVerified,
     } finally { setBusy(false); }
   };
 
-  return <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  return <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
     <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-5 border border-slate-100">
       <h1 className="text-2xl font-bold text-slate-900">Verify your email</h1>
       <p className="text-sm text-slate-700">Open the verification link sent to <strong>{email}</strong>, then return here to continue to your dashboard.</p>
@@ -47,5 +47,5 @@ export default function EmailVerification({ email, verificationSent, onVerified,
       <button type="button" disabled={busy} onClick={() => run('signout')}
         className="w-full text-sm text-slate-700 underline disabled:opacity-60">Sign out and use another account</button>
     </div>
-  </div>;
+  </main>;
 }

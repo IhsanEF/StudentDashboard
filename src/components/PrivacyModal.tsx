@@ -166,7 +166,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 space-y-2">
             <h3 className="font-bold text-slate-900">About / Operator</h3>
             <p>This independently hosted dashboard is operated by the owner of this deployment. It is not affiliated with, endorsed by, or operated by the any school or learning platform.</p>
-            <p><strong>Storage & Processing Locations:</strong> Google Cloud Firestore stores your cloud records, and Google Gemini processes content you send to AI features through this app's server. These services may store or process data outside Canada, including in the United States. This deployment's exact storage and processing regions have not been verified; Canadian-only data residency is not guaranteed.</p>
+            <p><strong>Storage & Processing Locations:</strong> Google Cloud Firestore stores your cloud records, and Google Gemini processes content you send to AI features through this app's server. These services may store or process data outside Canada, including in the United States. This deployment’s Firestore database is in us-east1 (South Carolina, United States), verified on October 11, 2026. Gemini’s processing locations have not been independently verified. Canadian-only data residency is not guaranteed.</p>
           </div>
 
           <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 flex items-start gap-3">
@@ -245,7 +245,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
               <div>
                 <h3 className="font-bold text-slate-900 text-sm">Server Telemetry, Diagnostics & User Profile Record</h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  <strong>Server Telemetry & Diagnostics:</strong> When your client interacts with server proxy endpoints (such as course-outline parsing or AI tools), our server logs request timestamps, error traces, and client IP addresses for security diagnostics, rate limiting, and system reliability. Diagnostic logs are purged on rolling cycles.
+                  <strong>Server Telemetry & Diagnostics:</strong> When your client interacts with server proxy endpoints (such as course-outline parsing or AI tools), our application diagnostics record a timestamp, the affected component and a general error code. Error messages, stack traces, student names, account IDs, browser details and document URLs are excluded. Request limits use hashed identifiers. Render may separately collect infrastructure and request logs under its service settings.
                 </p>
                 <p className="text-xs text-slate-600 mt-1">
                   <strong>User Profile Document:</strong> Your cloud account root record (<code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">users/{'{uid}'}</code>) stores your authenticated email, display name, account creation date, and notification preferences.

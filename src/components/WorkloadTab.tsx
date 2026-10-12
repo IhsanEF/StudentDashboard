@@ -352,10 +352,10 @@ export default function WorkloadTab({ onNavigate }: { onNavigate?: (tab: TabType
       {showThresholdSettings && (
         <div id="workload-threshold-settings" className="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h4 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-blue-950 flex items-center gap-2">
               <Flame className="text-rose-500" size={16} />
               <span>Customize "Crunch Week" Workload Threshold</span>
-            </h4>
+            </h3>
             <p className="text-xs text-blue-700 mt-0.5">
               Weeks with estimated hours at or above this number will be labelled Crunch.
             </p>
@@ -389,10 +389,10 @@ export default function WorkloadTab({ onNavigate }: { onNavigate?: (tab: TabType
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
           <div>
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 className="text-blue-600" size={18} />
               <span>Next {workload.weeks.length} weeks</span>
-            </h3>
+            </h2>
             <p className="text-xs text-slate-500">
               Tap a week to see which days it lands on.
             </p>
@@ -501,10 +501,10 @@ export default function WorkloadTab({ onNavigate }: { onNavigate?: (tab: TabType
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <CalendarDays className="text-indigo-600" size={18} />
                   <span>{isLaterSelected ? 'Later Tasks (Beyond Week 6)' : `Daily Breakdown: ${selectedWeek.weekLabel}`}</span>
-                </h3>
+                </h2>
                 <p className="text-xs text-slate-500">
                   {isLaterSelected 
                     ? `${laterTasks.length} ${pluralize(laterTasks.length, 'task')} scheduled beyond the 6-week horizon • Total ${laterHours} ${pluralize(laterHours, 'hour')}`
@@ -564,13 +564,13 @@ export default function WorkloadTab({ onNavigate }: { onNavigate?: (tab: TabType
             {/* List of Tasks in Selected Week / Day */}
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                   {isLaterSelected
                     ? `Later Tasks (${laterTasks.length})`
                     : selectedDayKey 
                       ? `Tasks Due on Selected Day (${selectedWeek.days.find(d => d.dateKey === selectedDayKey)?.dayName} ${selectedWeek.days.find(d => d.dateKey === selectedDayKey)?.dayNumber})` 
                       : `Due this week (${selectedWeek.tasks.length})`}
-                </h4>
+                </h3>
                 <div className="flex items-center gap-2">
                   {onNavigate && (
                     <>
@@ -698,10 +698,10 @@ export default function WorkloadTab({ onNavigate }: { onNavigate?: (tab: TabType
         <div className="space-y-4">
           {/* Course Hours Breakdown */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-3 flex items-center gap-2">
               <Layers size={16} className="text-blue-600" />
               <span>{isLaterSelected ? 'Later Work By Course' : `${selectedWeek.weekLabel} By Course`}</span>
-            </h3>
+            </h2>
 
             {displayedCourseList.length === 0 ? (
               <p className="text-xs text-slate-500 py-3 text-center">No coursework in this period.</p>
@@ -734,10 +734,10 @@ export default function WorkloadTab({ onNavigate }: { onNavigate?: (tab: TabType
 
           {/* WHAT TO DO ABOUT IT */}
           <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-indigo-200/70 p-4 text-indigo-950 space-y-2.5">
-            <h4 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-indigo-900">
+            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-indigo-900">
               <Sparkles size={14} className="text-indigo-600" />
               <span>WHAT TO DO ABOUT IT</span>
-            </h4>
+            </h3>
             <p className="text-xs text-indigo-900 leading-relaxed">
               {studyAdvice}
             </p>

@@ -9,7 +9,7 @@ const bundle = await build({ entryPoints: ['src/services/errorReporter.ts'], bun
   } }] });
 const sent: Array<{ body: string; headers: Record<string, string> }> = [];
 const module = { exports: {} as any };
-runInNewContext(bundle.outputFiles[0].text, { module, exports: module.exports, TextEncoder, console,
+runInNewContext(bundle.outputFiles[0].text, { module, exports: module.exports, TextEncoder, AbortSignal, console,
   navigator: { userAgent: 'browser' }, auth: { currentUser: { getIdToken: async () => 'verified-token' } },
   fetch: async (url: string, options: any) => { assert.equal(url, '/api/report-error'); sent.push(options); } });
 const report = module.exports.reportError;
@@ -24,6 +24,7 @@ for (const request of sent) {
   assert.equal(request.headers.Authorization, 'Bearer verified-token');
   const payload = JSON.parse(request.body);
   assert.ok(payload.source.startsWith('TaskProvider.listener.'));
-  assert.ok(!payload.message.includes('student@example.com') && !payload.message.includes('secret-token_123'));
+  assert.deepEqual(Object.keys(payload).sort(), ['errorCode', 'source']);
+  assert.ok(!request.body.includes('student@example.com') && !request.body.includes('secret-token_123') && !request.body.includes('火'));
 }
 console.log('Client telemetry source dedupe, UTF-8 body cap, bearer header and redaction passed.');

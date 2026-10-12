@@ -16,7 +16,7 @@ import {
   limit
 } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-import { db } from '../auth';
+import { db, getAuthHeader } from '../auth';
 import {
   Task,
   Course,
@@ -1254,8 +1254,8 @@ export async function createFirestoreGroupProject(
   userProfile: { displayName?: string; email?: string; photoURL?: string },
   groupData: { name: string; course_code: string; description?: string; target_date?: string }
 ): Promise<GroupProject> {
-  const groupId = `group-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  const inviteCode = `LMS${Math.floor(100 + Math.random() * 900)}`;
+  const groupId = `group-${crypto.randomUUID()}`;
+  const inviteCode = `LMS-${crypto.randomUUID().replace(/-/g, '').slice(0, 24).toUpperCase()}`;
   const nowIso = new Date().toISOString();
 
   const member: GroupMember = {
@@ -1291,48 +1291,33 @@ export async function joinFirestoreGroupByCode(
   userProfile: { displayName?: string; email?: string; photoURL?: string },
   code: string
 ): Promise<GroupProject | null> {
-  const cleanCode = code.trim().toUpperCase().replace(/\s+/g, '');
-  const groupsRef = collection(db, 'groups');
-  const q = query(groupsRef, where('invite_code', '==', cleanCode), limit(1));
-  const snapshot = await getDocs(q);
+  const response = await fetch('/api/groups/join', { method: 'POST',
+    headers: { ...await getAuthHeader(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: code.trim().toUpperCase() }), signal: AbortSignal.timeout(20000) });
+  const result = await response.json();
+  if (!response.ok || typeof result.groupId !== 'string') throw new Error(result.error || 'Could not join the group.');
+  const snapshot = await getDoc(doc(db, 'groups', result.groupId));
+  if (!snapshot.exists()) throw new Error('Group no longer exists.');
+  const group = normalizeGroupProject(snapshot.data(), snapshot.id);
+  if (!group.members.includes(userId)) throw new Error('Group membership could not be confirmed.');
+  return group;
+}
 
-  if (snapshot.empty) {
-    throw new Error(`No group found with invite code "${code}". Please verify with your team.`);
-  }
+export async function upgradeGroupInvite(groupId: string): Promise<string> {
+  const response = await fetch('/api/groups/invite', { method: 'POST',
+    headers: { ...await getAuthHeader(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ groupId }), signal: AbortSignal.timeout(20000) });
+  const result = await response.json();
+  if (!response.ok || typeof result.code !== 'string') throw new Error(result.error || 'Could not upgrade the invitation.');
+  return result.code;
+}
 
-  const groupDoc = snapshot.docs[0];
-  const group = normalizeGroupProject(groupDoc.data(), groupDoc.id);
-
-  if (group.members.includes(userId)) {
-    return group; // Already a member
-  }
-
-  const nowIso = new Date().toISOString();
-  const newMember: GroupMember = {
-    uid: userId,
-    displayName: userProfile.displayName || 'Student',
-    role: 'member'
-  };
-
-  const updatedMembers = [...group.members, userId];
-  const updatedMemberDetails = {
-    ...group.member_details,
-    [userId]: newMember
-  };
-
-  await updateDoc(groupDoc.ref, {
-    members: updatedMembers,
-    // Preserve teammates' entries exactly for the self-join security rule.
-    member_details: { ...groupDoc.data().member_details, [userId]: newMember },
-    updated_at: nowIso
-  });
-
-  return {
-    ...group,
-    members: updatedMembers,
-    member_details: updatedMemberDetails,
-    updated_at: nowIso
-  };
+export async function deleteFirestoreGroupProject(groupId: string): Promise<void> {
+  const response = await fetch('/api/groups/delete', { method: 'POST',
+    headers: { ...await getAuthHeader(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ groupId }), signal: AbortSignal.timeout(20000) });
+  const result = await response.json();
+  if (!response.ok || result.ok !== true) throw new Error(result.error || 'Group deletion could not be confirmed.');
 }
 
 // Save or update a task in a group

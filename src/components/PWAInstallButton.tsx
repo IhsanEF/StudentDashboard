@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Download, Smartphone, X, Share2, PlusSquare, Sparkles } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useModalFocus } from '../hooks/useModalFocus';
+import { cn } from '../utils';
 
 interface PWAInstallButtonProps {
   variant?: 'primary' | 'outline' | 'compact';
   className?: string;
+  hintClassName?: string;
   onInstalled?: () => void;
   showDismissibleHint?: boolean;
 }
@@ -13,6 +15,7 @@ interface PWAInstallButtonProps {
 export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ 
   variant = 'primary', 
   className = '',
+  hintClassName = '',
   onInstalled,
   showDismissibleHint = false
 }) => {
@@ -254,7 +257,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
 
   if (variant === 'compact') return null;
   return (
-    <p className={`text-xs text-slate-600 ${className}`}>
+    <p className={cn('text-xs text-slate-600', className, hintClassName)}>
       {isWebview
         ? 'Open this page in Safari or Chrome to see installation options.'
         : isIOSDevice

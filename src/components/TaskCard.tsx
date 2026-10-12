@@ -334,9 +334,9 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
             {task.title}
           </a>
         ) : (
-          <h4 className="font-bold text-slate-800 line-clamp-1 mb-1">
+          <h3 className="font-bold text-slate-800 line-clamp-1 mb-1">
             {task.title}
-          </h4>
+          </h3>
         )}
 
         {destinationHost && (
@@ -513,7 +513,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
           </div>
         )}
 
-        {/* Footer: Fixed 4 segmented options (To-do / Working / Submitted / Done) with current selected, plus CardMenu */}
+        {/* Footer: one status control and the existing task menu. */}
         <div className="mt-auto border-t border-slate-200/60 pt-3 flex flex-col gap-2">
           {task.due_at && (
             <div className={`text-xs font-semibold italic ${accentText}`}>
@@ -522,68 +522,14 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
             </div>
           )}
           <div className="flex items-center gap-1.5">
-            <div
-              role="group"
-              aria-label="Task status"
-              className="grid grid-cols-4 gap-1 flex-1 bg-slate-100 p-1 rounded-lg border border-slate-200"
-            >
-              <button
-                type="button"
-                onClick={() => handleAction('Not Started')}
-                disabled={currentStatus === 'Not Started'}
-                aria-pressed={currentStatus === 'Not Started'}
-                aria-label={`Mark "${task.title}" as to-do`}
-                className={`min-h-[36px] cursor-pointer text-center flex items-center justify-center text-xs font-semibold rounded-md px-1.5 py-1.5 transition-all ${
-                  currentStatus === 'Not Started'
-                    ? 'bg-white text-slate-900 shadow-sm border border-slate-300 font-bold opacity-100 cursor-default'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                To-do
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAction('Working')}
-                disabled={currentStatus === 'Working'}
-                aria-pressed={currentStatus === 'Working'}
-                aria-label={`Mark "${task.title}" as working`}
-                className={`min-h-[36px] cursor-pointer text-center flex items-center justify-center text-xs font-semibold rounded-md px-1.5 py-1.5 transition-all ${
-                  currentStatus === 'Working'
-                    ? 'bg-amber-600 text-white shadow-sm font-bold opacity-100 cursor-default'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                Working
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAction('Submitted')}
-                disabled={currentStatus === 'Submitted'}
-                aria-pressed={currentStatus === 'Submitted'}
-                aria-label={`Mark "${task.title}" as submitted`}
-                className={`min-h-[36px] cursor-pointer text-center flex items-center justify-center text-xs font-semibold rounded-md px-1.5 py-1.5 transition-all ${
-                  currentStatus === 'Submitted'
-                    ? 'bg-blue-600 text-white shadow-sm font-bold opacity-100 cursor-default'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                Submitted
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAction('Done')}
-                disabled={currentStatus === 'Done'}
-                aria-pressed={currentStatus === 'Done'}
-                aria-label={`Mark "${task.title}" as done`}
-                className={`min-h-[36px] cursor-pointer text-center flex items-center justify-center text-xs font-semibold rounded-md px-1.5 py-1.5 transition-all ${
-                  currentStatus === 'Done'
-                    ? 'bg-slate-900 text-white shadow-sm font-bold opacity-100 cursor-default'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                Done
-              </button>
-            </div>
+            <select aria-label={`Status for "${task.title}"`} value={currentStatus}
+              onChange={event => { void handleAction(event.target.value); }}
+              className="min-h-11 flex-1 min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+              <option value="Not Started">To-do</option>
+              <option value="Working">Working</option>
+              <option value="Submitted">Submitted</option>
+              <option value="Done">Done</option>
+            </select>
             <CardMenu
               task={task}
               onEdit={() => setEditModalOpen(true)}
@@ -611,5 +557,4 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
 };
 
 export default TaskCard;
-
 

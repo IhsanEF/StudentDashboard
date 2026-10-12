@@ -122,8 +122,8 @@ function createBaseTask(overrides: Partial<Task> = {}): Task {
 function runTaskCardTests() {
   console.log('🧪 Starting TaskCard Render Test Suite...');
 
-  // 1. A pending card in Simple has 5 controls: 4 segmented status options + CardMenu
-  console.log('  Testing pending card in Simple view has 5 controls (4 segmented status buttons + CardMenu)...');
+  // 1. A pending card in Simple has one select and one menu
+  console.log('  Testing pending card in Simple view has one status control and one menu...');
   const pendingTask = createBaseTask({ status: 'Not Started' });
   const simpleContext = createMockContext(true);
 
@@ -136,8 +136,8 @@ function runTaskCardTests() {
   // Count interactive buttons in the card
   const buttonMatches = pendingHtml.match(/<button[\s>]/g) || [];
   assert(
-    buttonMatches.length === 5,
-    `Pending card in Simple mode must have 5 controls (To-do, Working, Submitted, Done, CardMenu trigger). Found: ${buttonMatches.length}`
+    buttonMatches.length === 1 && (pendingHtml.match(/<select[\s>]/g) || []).length === 1,
+    `Pending card in Simple mode must have one status select and one menu. Found: ${buttonMatches.length}`
   );
   assert(pendingHtml.includes('To-do'), 'Card has To-do action button');
   assert(pendingHtml.includes('Working'), 'Card has Working action button');

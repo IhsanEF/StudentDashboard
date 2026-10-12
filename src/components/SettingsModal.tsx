@@ -928,13 +928,14 @@ export default function SettingsModal({ isOpen, onClose, user, onOpenFeedback }:
                       className={`cursor-pointer border rounded-xl p-3.5 transition-all flex flex-col justify-between ${
                         prefs.channels.inApp
                           ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         <input
                           type="checkbox"
+                          aria-label="In-App Alerts"
                           checked={prefs.channels.inApp}
                           onChange={() => {}}
                           className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
@@ -952,7 +953,7 @@ export default function SettingsModal({ isOpen, onClose, user, onOpenFeedback }:
                       className={`cursor-pointer border rounded-xl p-3.5 transition-all flex flex-col justify-between ${
                         prefs.channels.push && browserPermission === 'granted'
                           ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800'
-                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -1576,12 +1577,13 @@ export default function SettingsModal({ isOpen, onClose, user, onOpenFeedback }:
                       id="download-snapshot-btn"
                       type="button"
                       onClick={handleDownloadBackup}
-                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-xs"
+                      className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-xs"
                     >
                       <Download className="w-4 h-4" />
                       Download Full Snapshot (.json)
                     </button>
 
+                    {import.meta.env?.DEV && <>
                     <button
                       id="download-codebase-btn"
                       type="button"
@@ -1605,6 +1607,7 @@ export default function SettingsModal({ isOpen, onClose, user, onOpenFeedback }:
                       <Archive className="w-4 h-4 text-slate-500" />
                       .tar.gz
                     </button>
+                    </>}
                   </div>
 
                   {downloadSuccessNotice && (
@@ -1827,12 +1830,13 @@ export default function SettingsModal({ isOpen, onClose, user, onOpenFeedback }:
 
                   {/* PWA Install in Settings > Profile */}
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block mb-2">
                       Install app
                     </span>
                     <PWAInstallButton
                       variant="outline"
                       className="w-full justify-center"
+                      hintClassName="text-slate-600 dark:text-slate-300"
                       showDismissibleHint={true}
                     />
                   </div>
@@ -1841,7 +1845,7 @@ export default function SettingsModal({ isOpen, onClose, user, onOpenFeedback }:
                   {!isDemoMode && (
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                           How syncing works
                         </span>
                         <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-0.5 flex items-center gap-1.5">

@@ -38,7 +38,7 @@ async function harness(name: string, demo = false) {
   const environment = {
     reports: [] as any[], hooks, context: {
       isDemoMode: demo, tasks: [], courses: INITIAL_SAMPLE_COURSES,
-      groups: DEMO_GROUPS, activeGroupId: DEMO_GROUPS[0].id, groupTasks: DEMO_GROUP_TASKS,
+      groups: DEMO_GROUPS.map(group => ({ ...group, invite_code: 'LMS-00112233445566778899AABB' })), activeGroupId: DEMO_GROUPS[0].id, groupTasks: DEMO_GROUP_TASKS,
       notificationPrefs: {}, uiPrefs: { viewMode: 'detailed' }, showToast: () => {},
       setActiveGroupId: () => {},
       createGroup: async () => { createCalls++; if (createResult instanceof Error) throw createResult; return await createResult; },
@@ -66,7 +66,7 @@ async function harness(name: string, demo = false) {
         args.path.endsWith('/errorReporter') ? 'export const reportError=(error,context)=>globalThis.reports.push({error,...context});' :
         args.path.endsWith('/auth') ? 'export const auth=globalThis.auth; export const db={};' :
         args.path.endsWith('/PrivacyModal') ? 'export default ()=>null;' :
-        'export const batchImportTasksAndCourses=globalThis.batch; export const saveFirestoreCourse=()=>{};' }));
+        'export const batchImportTasksAndCourses=globalThis.batch; export const saveFirestoreCourse=()=>{}; export const upgradeGroupInvite=async()=>"LMS-00112233445566778899AABB"; export const deleteFirestoreGroupProject=async()=>{};' }));
     } }] });
   const module = { exports: {} as any };
   let responseStatus = 200;
@@ -277,7 +277,7 @@ assert.equal('isDuplicate' in syllabus.imports[0][1][0], false);
 
 const rules = readFileSync('firestore.rules', 'utf8');
 const groupCreateRule = rules.slice(rules.indexOf('match /groups/{groupId}'), rules.indexOf('// Group update rule:'));
-assert.match(groupCreateRule, /description is string && request.resource.data.description.size\(\) <= 2000/);
+assert.match(groupCreateRule, /description is string && data.description.size\(\) <= 2000/);
 assert.match(groupCreateRule, /request.resource.data.created_by == request.auth.uid/);
 assert.match(groupCreateRule, /request.resource.data.members == \[request.auth.uid\]/);
 console.log('Batch 16 form, clipboard, import payload, course correction, ICS, MIME and rule regressions passed.');

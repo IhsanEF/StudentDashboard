@@ -146,7 +146,7 @@ export default function Login({
   const isBusy = loading;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
+    <main className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-slate-100">
         <div className="text-center">
           <div className="bg-blue-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
@@ -288,10 +288,11 @@ export default function Login({
         </p>
       </div>
 
+      <a href="/accessibility.html" className="text-sm text-slate-600 underline text-center block mb-4">Accessibility</a>
       <PrivacyModal
         isOpen={isPrivacyModalOpen}
         onClose={() => setIsPrivacyModalOpen(false)}
       />
-    </div>
+    </main>
   );
 }

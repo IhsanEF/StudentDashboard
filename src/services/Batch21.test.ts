@@ -1,4 +1,9 @@
 import assert from 'node:assert/strict';
+import express from 'express';
+import type { AddressInfo } from 'node:net';
+import { initializeApp as initializeAdminApp, deleteApp as deleteAdminApp } from 'firebase-admin/app';
+import { getFirestore as getAdminDb } from 'firebase-admin/firestore';
+import { mountGroupRoutes } from '../../server/groups';
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
 import React from 'react';
@@ -71,16 +76,16 @@ assert.match(renderToStaticMarkup(render()), /Friday 2026-10-02: 5\.5 hours, 2 t
 console.log('Batch 21 workload screen: Friday shows 3.3h, day selection works, partial quiz stays 1.5h, assignment + quiz total 5.5h.');
 
 // Load the real database service against emulator clients, with no production connection.
-async function service(db: any) {
+async function service(db: any, userId = '', origin = '') {
   const bundle = await build({ entryPoints: ['src/services/db.ts'], bundle: true, write: false, platform: 'node', format: 'cjs', logLevel: 'silent',
     plugins: [{ name: 'emulator-transport', setup(builder) {
       builder.onResolve({ filter: /^(\.\.\/auth|firebase\/(firestore|auth))$/ }, args => ({ path: args.path, namespace: 'emulator' }));
-      builder.onLoad({ filter: /.*/, namespace: 'emulator' }, args => ({ contents: args.path === '../auth' ? 'export const db=globalThis.testDb;'
+      builder.onLoad({ filter: /.*/, namespace: 'emulator' }, args => ({ contents: args.path === '../auth' ? 'export const db=globalThis.testDb; export const getAuthHeader=async()=>({Authorization: "Bearer "+globalThis.testUid});'
         : args.path.endsWith('/auth') ? '' : ['collection','doc','getDoc','getDocs','setDoc','updateDoc','deleteDoc','deleteField','onSnapshot','serverTimestamp','writeBatch','runTransaction','query','where','limit']
           .map(name => `export const ${name}=(...args)=>globalThis.transport.${name}(...args);`).join('\n') }));
     } }] });
   const module = { exports: {} as any };
-  new Function('module','exports','require','globalThis',bundle.outputFiles[0].text)(module,module.exports,createRequire(import.meta.url),{ testDb: db, transport });
+  new Function('module','exports','require','globalThis','fetch',bundle.outputFiles[0].text)(module,module.exports,createRequire(import.meta.url),{ testDb: db, testUid: userId, transport }, (url: string, options: any) => fetch(origin + url, options));
   return module.exports;
 }
 
@@ -91,14 +96,20 @@ if (process.env.FIRESTORE_EMULATOR_HOST) {
   const clients = ['creator', 'next', 'third', 'outsider'].map(uid => {
     const app = initializeApp({ projectId: 'demo-batch21', apiKey: 'fake', appId: 'fake' }, `batch21-${uid}`);
     const db = initializeFirestore(app, {}, databaseId);
-    connectFirestoreEmulator(db, host, Number(port), { mockUserToken: { sub: uid, user_id: uid, email: `${uid}@example.com` } });
+    connectFirestoreEmulator(db, host, Number(port), { mockUserToken: { sub: uid, user_id: uid, email: `${uid}@example.com`, email_verified: true } });
     return { uid, app, db };
   });
+  const admin = initializeAdminApp({ projectId: 'demo-batch21' }, 'group-invite-test');
+  const http = express();
+  mountGroupRoutes(http, { authenticate: (req, res, next) => { const uid = req.headers.authorization?.replace('Bearer ', ''); if (!uid) { res.sendStatus(401); return; } (req as any).user = { uid, name: uid[0].toUpperCase() + uid.slice(1) }; next(); }, db: () => getAdminDb(admin, databaseId), rateLimit: async () => true });
+  const server = http.listen(0, '127.0.0.1');
+  await new Promise<void>(resolve => server.once('listening', resolve));
+  const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   try {
     const [creator, next, third, outsider] = clients;
-    const creatorApi = await service(creator.db);
-    const nextApi = await service(next.db);
-    const thirdApi = await service(third.db);
+    const creatorApi = await service(creator.db, 'creator', origin);
+    const nextApi = await service(next.db, 'next', origin);
+    const thirdApi = await service(third.db, 'third', origin);
     // Reproduce the original defect even for legacy documents that still name
     // a departed creator. This proves membership is required independently of transfer.
     const legacyId = `legacy-left-${Date.now()}`;
@@ -113,6 +124,8 @@ if (process.env.FIRESTORE_EMULATOR_HOST) {
     await assert.rejects(deleteDoc(doc(creator.db, 'groups', legacyId)), /permission/i);
     await assert.rejects(deleteDoc(doc(next.db, 'groups', legacyId)), /permission/i);
     const group = await creatorApi.createFirestoreGroupProject('creator', { displayName: 'Creator' }, { name: 'Ownership test', course_code: 'TEST 100' });
+    await assert.rejects(getDoc(doc(outsider.db, 'groups', group.id)), /permission/i);
+    await assert.rejects(transport.getDocs(transport.collection(outsider.db, 'groups')), /permission/i);
     await nextApi.joinFirestoreGroupByCode('next', { displayName: 'Next' }, group.invite_code);
     const ref = (client: typeof creator) => doc(client.db, 'groups', group.id);
     const stored = (await getDoc(ref(next))).data()!;
@@ -147,9 +160,31 @@ if (process.env.FIRESTORE_EMULATOR_HOST) {
     });
     assert.equal(deleted.status, 404);
     const deletable = await creatorApi.createFirestoreGroupProject('creator', {}, { name: 'Delete allowed', course_code: 'TEST' });
-    await deleteDoc(doc(creator.db, 'groups', deletable.id));
+    const taskRef = doc(creator.db, 'groups', deletable.id, 'tasks', 'cleanup-task');
+    await setDoc(taskRef, { title: 'Clean up', group_id: deletable.id, created_by: 'creator' });
+    const post = (route: string, uid: string, body: any) => fetch(origin + '/api/groups/' + route, { method: 'POST', headers: { Authorization: 'Bearer ' + uid, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    assert.equal((await post('delete', 'outsider', {groupId:deletable.id})).status, 403);
+    assert.equal((await post('invite', 'outsider', {groupId:deletable.id})).status, 403);
+    assert.equal((await post('join', 'outsider', {code:deletable.invite_code, role:'owner'})).status, 400);
+    await creatorApi.deleteFirestoreGroupProject(deletable.id);
+    assert.equal((await getAdminDb(admin, databaseId).doc('groups/' + deletable.id).get()).exists, false);
+    assert.equal((await getAdminDb(admin, databaseId).doc('groups/' + deletable.id + '/tasks/cleanup-task').get()).exists, false);
+    for (const collection of ['tasks','courses','classes','exams','focus_sessions','groupSettings']) {
+      const ref = doc(creator.db, 'users', 'creator', collection, 'isolation');
+      await getAdminDb(admin, databaseId).doc(ref.path).set({ audit:true });
+      await assert.rejects(getDoc(doc(outsider.db, ref.path)), /permission/i);
+      await assert.rejects(setDoc(doc(outsider.db, ref.path), {audit:true}), /permission/i);
+      await assert.rejects(deleteDoc(doc(outsider.db, ref.path)), /permission/i);
+    }
+    for (const collection of ['ai_daily_usage','ai_rate_usage','calendar_tokens','feedback','unknown_private']) {
+      await assert.rejects(getDoc(doc(creator.db, collection, 'private')), /permission/i);
+      await assert.rejects(setDoc(doc(creator.db, collection, 'private'), {audit:true}), /permission/i);
+    }
     console.log('Batch 21 named-database emulator: creator leave transfers ownership; former creators, non-owner members and outsiders cannot delete; self-joins preserve teammate details; current owner can delete.');
   } finally {
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    await getAdminDb(admin, databaseId).terminate();
+    await deleteAdminApp(admin);
     await Promise.all(clients.map(async c => { await terminate(c.db); await deleteApp(c.app); }));
   }
 }
